@@ -18,3 +18,12 @@ type Response struct {
 	Data     interface{}     `json:"data"`
 	Errors   []ResponseError `json:"errors"`
 }
+
+// NewResponseError defines a structure to encode api response data
+func NewResponseError(code string, scope, err string) ResponseError {
+	return ResponseError{
+		Code:  code,
+		Scope: scope,
+		Error: err,
+	}
+}

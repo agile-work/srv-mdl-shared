@@ -12,14 +12,20 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/agile-work/srv-shared/sql-builder/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 )
 
 var (
-	addr = flag.String("port", "", "TCP port to listen to")
-	cert = flag.String("cert", "cert.pem", "Path to certification")
-	key  = flag.String("key", "key.pem", "Path to certification key")
+	addr       = flag.String("port", "", "TCP port to listen to")
+	cert       = flag.String("cert", "cert.pem", "Path to certification")
+	key        = flag.String("key", "key.pem", "Path to certification key")
+	dbHost     = flag.String("dbHost", "cryo.cdnm8viilrat.us-east-2.rds-preview.amazonaws.com", "Database host")
+	dbPort     = flag.Int("dbPort", 5432, "Database port")
+	dbUser     = flag.String("dbUser", "cryoadmin", "Database user")
+	dbPassword = flag.String("dbPassword", "x3FhcrWDxnxCq9p", "Database password")
+	dbName     = flag.String("dbName", "cryo", "Database name")
 )
 
 //ListenAndServe default module api listen and server
@@ -47,6 +53,12 @@ func ListenAndServe(port string, moduleRouter *chi.Mux) {
 		ClientAuth: tls.RequireAndVerifyClientCert,
 	}
 	tlsConfig.BuildNameToCertificate()
+
+	err = db.Connect(*dbHost, *dbPort, *dbUser, *dbPassword, *dbName, false)
+	if err != nil {
+		panic("Database error")
+	}
+	defer db.Close()
 
 	router := chi.NewRouter()
 	router.Use(

@@ -1,6 +1,6 @@
 package shared
 
-//Metadata defines metadata on the response
+// Metadata defines metadata on the response
 type Metadata struct {
 }
 

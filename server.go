@@ -28,7 +28,7 @@ var (
 	dbName     = flag.String("dbName", "cryo", "Database name")
 )
 
-//ListenAndServe default module api listen and server
+// ListenAndServe default module api listen and server
 func ListenAndServe(port string, moduleRouter *chi.Mux) {
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)

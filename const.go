@@ -13,4 +13,8 @@ const (
 	ErrorLoadingData string = "005-ErrorLoadingData"
 	// ErrorLogin unable to login user
 	ErrorLogin string = "006-ErrorLoginUser"
+	// ErrorJobExecution unable to execute job
+	ErrorJobExecution string = "007-ErrorJobExecution"
+	// JobSystemCreateSchema exec tasks to create a schema
+	JobSystemCreateSchema string = "job_system_create_schema"
 )

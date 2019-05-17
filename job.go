@@ -33,7 +33,7 @@ func CreateJobInstance(ownerID string, code string, params map[string]interface{
 		Code:        job.Code,
 		ExecTimeout: job.ExecTimeout,
 		Params:      jobInstanceParams,
-		Status:      shared.JobStatusCreating,
+		Status:      shared.StatusCreating,
 		CreatedBy:   ownerID,
 		CreatedAt:   date,
 		UpdatedBy:   ownerID,

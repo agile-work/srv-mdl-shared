@@ -9,6 +9,7 @@ import (
 	"time"
 
 	module "github.com/agile-work/srv-mdl-shared"
+	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
 
@@ -22,7 +23,7 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 	err := json.Unmarshal(body, &object)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(module.ErrorParsingRequest, fmt.Sprintf("%s unmarshal body", scope), err.Error()))
+		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorParsingRequest, fmt.Sprintf("%s unmarshal body", scope), err.Error()))
 
 		return response
 	}
@@ -42,7 +43,7 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 	id, err := db.InsertStruct(table, object)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(module.ErrorInsertingRecord, fmt.Sprintf("%s create", scope), err.Error()))
+		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorInsertingRecord, fmt.Sprintf("%s create", scope), err.Error()))
 
 		return response
 	}
@@ -56,7 +57,7 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 		err = CreateTranslationsFromStruct(table, r.Header.Get("Content-Language"), object)
 		if err != nil {
 			response.Code = http.StatusInternalServerError
-			response.Errors = append(response.Errors, module.NewResponseError(module.ErrorInsertingRecord, fmt.Sprintf("%s create translation", scope), err.Error()))
+			response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorInsertingRecord, fmt.Sprintf("%s create translation", scope), err.Error()))
 
 			return response
 		}

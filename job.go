@@ -2,10 +2,9 @@ package shared
 
 import (
 	"errors"
-	"net/http"
 	"time"
 
-	"github.com/agile-work/srv-mdl-core/models"
+	"github.com/agile-work/srv-mdl-shared/models"
 	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
@@ -34,14 +33,14 @@ func CreateJobInstance(ownerID string, code string, params map[string]interface{
 		Code:        job.Code,
 		ExecTimeout: job.ExecTimeout,
 		Params:      jobInstanceParams,
-		Status:      "creating",
+		Status:      shared.JobStatusCreating,
 		CreatedBy:   ownerID,
 		CreatedAt:   date,
 		UpdatedBy:   ownerID,
 		UpdatedAt:   date,
 	}
 
-	return db.InsertStruct(jobInstanceTable, jobInstance)
+	return db.InsertStruct(jobInstanceTable, &jobInstance)
 }
 
 // fillParameters fill parameters with values
@@ -61,21 +60,4 @@ func fillParameters(params []models.Param, values map[string]interface{}) ([]mod
 	}
 
 	return result, nil
-}
-
-// ExecJob execute a new job
-func ExecJob(ownerID string, code string, params map[string]interface{}) (string, *Response) {
-	response := &Response{
-		Code: http.StatusOK,
-	}
-
-	id, err := CreateJobInstance(ownerID, code, params)
-	if err != nil {
-		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, NewResponseError(ErrorJobExecution, "Job execution", err.Error()))
-
-		return "", response
-	}
-
-	return id, nil
 }

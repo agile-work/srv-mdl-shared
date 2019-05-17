@@ -9,6 +9,7 @@ import (
 	"time"
 
 	module "github.com/agile-work/srv-mdl-shared"
+	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
@@ -23,7 +24,7 @@ func Update(r *http.Request, object interface{}, scope, table string, condition 
 	err := json.Unmarshal(body, &object)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(module.ErrorParsingRequest, fmt.Sprintf("%s unmarshal body", scope), err.Error()))
+		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorParsingRequest, fmt.Sprintf("%s unmarshal body", scope), err.Error()))
 
 		return response
 	}
@@ -41,7 +42,7 @@ func Update(r *http.Request, object interface{}, scope, table string, condition 
 	err = db.UpdateStruct(table, object, condition, columns...)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(module.ErrorInsertingRecord, fmt.Sprintf("%s update", scope), err.Error()))
+		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorInsertingRecord, fmt.Sprintf("%s update", scope), err.Error()))
 
 		return response
 	}
@@ -52,7 +53,7 @@ func Update(r *http.Request, object interface{}, scope, table string, condition 
 		err = UpdateTranslationsFromStruct(table, r.Header.Get("Content-Language"), object, columns...)
 		if err != nil {
 			response.Code = http.StatusInternalServerError
-			response.Errors = append(response.Errors, module.NewResponseError(module.ErrorInsertingRecord, fmt.Sprintf("%s update translation", scope), err.Error()))
+			response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorInsertingRecord, fmt.Sprintf("%s update translation", scope), err.Error()))
 
 			return response
 		}

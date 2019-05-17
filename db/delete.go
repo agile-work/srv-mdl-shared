@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	module "github.com/agile-work/srv-mdl-shared"
+	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
@@ -17,7 +18,7 @@ func Remove(r *http.Request, scope, table string, conditions builder.Builder) *m
 	err := db.DeleteStruct(table, conditions)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(module.ErrorDeletingData, scope, err.Error()))
+		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorDeletingData, scope, err.Error()))
 
 		return response
 	}

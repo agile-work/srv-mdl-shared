@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	module "github.com/agile-work/srv-mdl-shared"
+	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
@@ -43,7 +44,7 @@ func Load(r *http.Request, object interface{}, scope, table string, conditions b
 	err := db.LoadStruct(table, object, conditions)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(module.ErrorLoadingData, scope, err.Error()))
+		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorLoadingData, scope, err.Error()))
 
 		return response
 	}

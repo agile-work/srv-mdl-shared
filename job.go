@@ -13,10 +13,10 @@ import (
 // CreateJobInstance create a new job instance
 func CreateJobInstance(ownerID string, code string, params map[string]interface{}) (string, error) {
 	jobTable := shared.TableCoreJobs
-	conditions := builder.Equal("code", code)
+	condition := builder.Equal("code", code)
 	job := models.Job{}
 
-	err := db.LoadStruct(jobTable, &job, conditions)
+	err := db.LoadStruct(jobTable, &job, condition)
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +33,7 @@ func CreateJobInstance(ownerID string, code string, params map[string]interface{
 		Code:        job.Code,
 		ExecTimeout: job.ExecTimeout,
 		Params:      jobInstanceParams,
-		Status:      shared.StatusCreating,
+		Status:      shared.JobStatusCreating,
 		CreatedBy:   ownerID,
 		CreatedAt:   date,
 		UpdatedBy:   ownerID,

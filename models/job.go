@@ -96,10 +96,12 @@ type JobInstance struct {
 	ExecTimeout   int       `json:"exec_timeout" sql:"exec_timeout"`
 	Params        []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
 	Status        string    `json:"status" sql:"status"`
+	StartAt       time.Time `json:"start_at" sql:"start_at"`
+	FinishAt      time.Time `json:"finish_at" sql:"finish_at"`
 	CreatedBy     string    `json:"created_by" sql:"created_by"`
-	CreatedByUser *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_jobs.created_by"`
+	CreatedByUser *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_job_instances.created_by"`
 	CreatedAt     time.Time `json:"created_at" sql:"created_at"`
 	UpdatedBy     string    `json:"updated_by" sql:"updated_by"`
-	UpdatedByUser *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_jobs.updated_by"`
+	UpdatedByUser *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_job_instances.updated_by"`
 	UpdatedAt     time.Time `json:"updated_at" sql:"updated_at"`
 }

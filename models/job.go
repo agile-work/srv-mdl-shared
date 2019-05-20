@@ -20,6 +20,27 @@ type Job struct {
 	UpdatedAt     time.Time `json:"updated_at" sql:"updated_at"`
 }
 
+// ViewJobInstance defines the struct of this object
+type ViewJobInstance struct {
+	ID            string    `json:"id" sql:"id" pk:"true"`
+	JobID         string    `json:"job_id" sql:"job_id"`
+	Code          string    `json:"code" sql:"code"`
+	Name          string    `json:"name" sql:"name"`
+	Description   string    `json:"description" sql:"description"`
+	JobType       string    `json:"job_type" sql:"job_type"`
+	ExecTimeout   int       `json:"exec_timeout" sql:"exec_timeout"`
+	Params        []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
+	StartAt       time.Time `json:"start_at" sql:"start_at"`
+	FinishAt      time.Time `json:"finish_at" sql:"finish_at"`
+	Status        string    `json:"status" sql:"status"`
+	CreatedBy     string    `json:"created_by" sql:"created_by"`
+	CreatedByUser *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_v_core_job_instance.created_by"`
+	CreatedAt     time.Time `json:"created_at" sql:"created_at"`
+	UpdatedBy     string    `json:"updated_by" sql:"updated_by"`
+	UpdatedByUser *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_v_core_job_instance.updated_by"`
+	UpdatedAt     time.Time `json:"updated_at" sql:"updated_at"`
+}
+
 // JobTask defines the struct of this object
 type JobTask struct {
 	ID               string    `json:"id" sql:"id" pk:"true"`
@@ -34,16 +55,52 @@ type JobTask struct {
 	ExecAction       string    `json:"exec_action" sql:"exec_action"`
 	ExecAddress      string    `json:"exec_address" sql:"exec_address"`
 	ExecPayload      string    `json:"exec_payload" sql:"exec_payload"`
+	ExecResponse     string    `json:"exec_response" sql:"exec_response"`
 	ActionOnFail     string    `json:"action_on_fail" sql:"action_on_fail"`
 	MaxRetryAttempts int       `json:"max_retry_attempts" sql:"max_retry_attempts"`
 	RollbackAction   string    `json:"rollback_action" sql:"rollback_action"`
 	RollbackAddress  string    `json:"rollback_address" sql:"rollback_address"`
 	RollbackPayload  string    `json:"rollback_payload" sql:"rollback_payload"`
+	RollbackResponse string    `json:"rollback_response" sql:"rollback_response"`
 	CreatedBy        string    `json:"created_by" sql:"created_by"`
 	CreatedByUser    *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_job_tasks.created_by"`
 	CreatedAt        time.Time `json:"created_at" sql:"created_at"`
 	UpdatedBy        string    `json:"updated_by" sql:"updated_by"`
 	UpdatedByUser    *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_job_tasks.updated_by"`
+	UpdatedAt        time.Time `json:"updated_at" sql:"updated_at"`
+}
+
+// ViewJobTaskInstance defines the struct of this object
+type ViewJobTaskInstance struct {
+	ID               string    `json:"id" sql:"id" pk:"true"`
+	JobID            string    `json:"job_id" sql:"job_id"`
+	JobInstanceID    string    `json:"job_instance_id" sql:"job_instance_id"`
+	TaskID           string    `json:"task_id" sql:"task_id"`
+	Code             string    `json:"code" sql:"code"`
+	Name             string    `json:"name" sql:"name"`
+	Description      string    `json:"description" sql:"description"`
+	TaskSequence     int       `json:"task_sequence" sql:"task_sequence"`
+	ExecTimeout      int       `json:"exec_timeout" sql:"exec_timeout"`
+	Params           []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
+	ParentID         string    `json:"parent_id" sql:"parent_id" fk:"true"`
+	ExecAction       string    `json:"exec_action" sql:"exec_action"`
+	ExecAddress      string    `json:"exec_address" sql:"exec_address"`
+	ExecPayload      string    `json:"exec_payload" sql:"exec_payload"`
+	ExecResponse     string    `json:"exec_response" sql:"exec_response"`
+	ActionOnFail     string    `json:"action_on_fail" sql:"action_on_fail"`
+	MaxRetryAttempts int       `json:"max_retry_attempts" sql:"max_retry_attempts"`
+	RollbackAction   string    `json:"rollback_action" sql:"rollback_action"`
+	RollbackAddress  string    `json:"rollback_address" sql:"rollback_address"`
+	RollbackPayload  string    `json:"rollback_payload" sql:"rollback_payload"`
+	RollbackResponse string    `json:"rollback_response" sql:"rollback_response"`
+	StartAt          time.Time `json:"start_at" sql:"start_at"`
+	FinishAt         time.Time `json:"finish_at" sql:"finish_at"`
+	Status           string    `json:"status" sql:"status"`
+	CreatedBy        string    `json:"created_by" sql:"created_by"`
+	CreatedByUser    *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_v_core_job_task_instance.created_by"`
+	CreatedAt        time.Time `json:"created_at" sql:"created_at"`
+	UpdatedBy        string    `json:"updated_by" sql:"updated_by"`
+	UpdatedByUser    *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_v_core_job_task_instance.updated_by"`
 	UpdatedAt        time.Time `json:"updated_at" sql:"updated_at"`
 }
 

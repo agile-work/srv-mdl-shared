@@ -55,13 +55,11 @@ type JobTask struct {
 	ExecAction       string    `json:"exec_action" sql:"exec_action"`
 	ExecAddress      string    `json:"exec_address" sql:"exec_address"`
 	ExecPayload      string    `json:"exec_payload" sql:"exec_payload"`
-	ExecResponse     string    `json:"exec_response" sql:"exec_response"`
 	ActionOnFail     string    `json:"action_on_fail" sql:"action_on_fail"`
 	MaxRetryAttempts int       `json:"max_retry_attempts" sql:"max_retry_attempts"`
 	RollbackAction   string    `json:"rollback_action" sql:"rollback_action"`
 	RollbackAddress  string    `json:"rollback_address" sql:"rollback_address"`
 	RollbackPayload  string    `json:"rollback_payload" sql:"rollback_payload"`
-	RollbackResponse string    `json:"rollback_response" sql:"rollback_response"`
 	CreatedBy        string    `json:"created_by" sql:"created_by"`
 	CreatedByUser    *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_job_tasks.created_by"`
 	CreatedAt        time.Time `json:"created_at" sql:"created_at"`

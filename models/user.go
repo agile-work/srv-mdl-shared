@@ -15,6 +15,7 @@ type User struct {
 	Email         string    `json:"email" sql:"email"`
 	Password      string    `json:"password" sql:"password"`
 	LanguageCode  string    `json:"language_code" sql:"language_code"`
+	ReceiveEmails string    `json:"receive_emails" sql:"receive_emails"`
 	Active        bool      `json:"active" sql:"active"`
 	CreatedBy     string    `json:"created_by" sql:"created_by"`
 	CreatedByUser *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_users.created_by"`
@@ -34,6 +35,7 @@ type ViewGroupUser struct {
 	Email         string    `json:"email" sql:"email"`
 	Password      string    `json:"password" sql:"password"`
 	LanguageCode  string    `json:"language_code" sql:"language_code"`
+	ReceiveEmails string    `json:"receive_emails" sql:"receive_emails"`
 	Active        bool      `json:"active" sql:"active"`
 	CreatedBy     string    `json:"created_by" sql:"created_by"`
 	CreatedByUser *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_v_group_users.created_by"`

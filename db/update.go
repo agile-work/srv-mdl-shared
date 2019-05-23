@@ -36,8 +36,13 @@ func Update(r *http.Request, object interface{}, scope, table string, condition 
 	elementValue := reflect.ValueOf(object).Elem()
 	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
 	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
-	elementUpdatedBy.SetString(userID)
-	elementUpdatedAt.Set(reflect.ValueOf(now))
+	if elementUpdatedBy.IsValid() {
+		elementUpdatedBy.SetString(userID)
+	}
+
+	if elementUpdatedAt.IsValid() {
+		elementUpdatedAt.Set(reflect.ValueOf(now))
+	}
 
 	err = db.UpdateStruct(table, object, condition, columns...)
 	if err != nil {

@@ -35,10 +35,21 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
 	elementCreatedAt := elementValue.FieldByName("CreatedAt")
 	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
-	elementCreatedBy.SetString(userID)
-	elementUpdatedBy.SetString(userID)
-	elementCreatedAt.Set(reflect.ValueOf(now))
-	elementUpdatedAt.Set(reflect.ValueOf(now))
+	if elementCreatedBy.IsValid() {
+		elementCreatedBy.SetString(userID)
+	}
+
+	if elementUpdatedBy.IsValid() {
+		elementUpdatedBy.SetString(userID)
+	}
+
+	if elementCreatedAt.IsValid() {
+		elementCreatedAt.Set(reflect.ValueOf(now))
+	}
+
+	if elementUpdatedAt.IsValid() {
+		elementUpdatedAt.Set(reflect.ValueOf(now))
+	}
 
 	id, err := db.InsertStruct(table, object)
 	if err != nil {

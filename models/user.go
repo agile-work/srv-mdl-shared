@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	shared "github.com/agile-work/srv-shared"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -21,6 +22,18 @@ type User struct {
 	CreatedAt     time.Time `json:"created_at" sql:"created_at"`
 	UpdatedBy     string    `json:"updated_by" sql:"updated_by"`
 	UpdatedAt     time.Time `json:"updated_at" sql:"updated_at"`
+}
+
+// GetUserSelectableFields returns an array with the user fields
+func GetUserSelectableFields() []string {
+	return []string{
+		shared.TableCoreUsers + ".id as user_id",
+		shared.TableCoreUsers + ".username",
+		shared.TableCoreUsers + ".first_name",
+		shared.TableCoreUsers + ".last_name",
+		shared.TableCoreUsers + ".email",
+	}
+
 }
 
 // ViewGroupUser defines the struct of this object

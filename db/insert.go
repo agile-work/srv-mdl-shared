@@ -1,12 +1,9 @@
 package db
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"reflect"
-	"time"
 
 	module "github.com/agile-work/srv-mdl-shared"
 	shared "github.com/agile-work/srv-shared"
@@ -15,43 +12,14 @@ import (
 
 // Create object data in the database
 func Create(r *http.Request, object interface{}, scope, table string) *module.Response {
-	response := &module.Response{
-		Code: http.StatusOK,
-	}
-	body, _ := ioutil.ReadAll(r.Body)
-
-	err := json.Unmarshal(body, &object)
-	if err != nil {
-		response.Code = http.StatusInternalServerError
-		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorParsingRequest, fmt.Sprintf("%s unmarshal body", scope), err.Error()))
-
+	response := GetResponse(r, object, scope)
+	if response.Code != http.StatusOK {
 		return response
 	}
 
-	userID := r.Header.Get("userID")
-	now := time.Now()
-	elementValue := reflect.ValueOf(object).Elem()
-	elementCreatedBy := elementValue.FieldByName("CreatedBy")
-	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
-	elementCreatedAt := elementValue.FieldByName("CreatedAt")
-	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
-	if elementCreatedBy.IsValid() {
-		elementCreatedBy.SetString(userID)
-	}
+	columns := getColumnsFromBody(r, object)
 
-	if elementUpdatedBy.IsValid() {
-		elementUpdatedBy.SetString(userID)
-	}
-
-	if elementCreatedAt.IsValid() {
-		elementCreatedAt.Set(reflect.ValueOf(now))
-	}
-
-	if elementUpdatedAt.IsValid() {
-		elementUpdatedAt.Set(reflect.ValueOf(now))
-	}
-
-	id, err := db.InsertStruct(table, object)
+	id, err := db.InsertStruct(table, object, columns...)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
 		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorInsertingRecord, fmt.Sprintf("%s create", scope), err.Error()))
@@ -59,6 +27,7 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 		return response
 	}
 
+	elementValue := reflect.ValueOf(object).Elem()
 	elementID := elementValue.FieldByName("ID")
 	elementID.SetString(id)
 

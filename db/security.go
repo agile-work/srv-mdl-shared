@@ -21,16 +21,16 @@ type StructurePermission struct {
 // passing StructureType = "" returns all types of structures
 func GetUserAvailableFields(userID, schemaCode, structureType string) ([]StructurePermission, error) {
 	permissions := []StructurePermission{}
-	userIDColumn := fmt.Sprintf("%s.user_id", shared.ViewCoreStructurePermissions)
-	schemaCodeColumn := fmt.Sprintf("%s.schema_code", shared.ViewCoreStructurePermissions)
-	structureTypeColumn := fmt.Sprintf("%s.structure_type", shared.ViewCoreStructurePermissions)
+	userIDColumn := fmt.Sprintf("%s.user_id", shared.ViewCoreUserStructurePermissions)
+	schemaCodeColumn := fmt.Sprintf("%s.schema_code", shared.ViewCoreUserStructurePermissions)
+	structureTypeColumn := fmt.Sprintf("%s.structure_type", shared.ViewCoreUserStructurePermissions)
 	condition := builder.And(
 		builder.Equal(userIDColumn, userID),
 		builder.Equal(schemaCodeColumn, schemaCode),
 		builder.Equal(structureTypeColumn, structureType),
 	)
 
-	err := sql.LoadStruct(shared.ViewCoreStructurePermissions, &permissions, condition)
+	err := sql.LoadStruct(shared.ViewCoreUserStructurePermissions, &permissions, condition)
 	if err != nil {
 		return nil, err
 	}

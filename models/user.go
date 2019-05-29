@@ -36,6 +36,22 @@ func GetUserSelectableFields() []string {
 
 }
 
+// ViewUserAllPermissions defines the struct of this object
+type ViewUserAllPermissions struct {
+	UserID         string `json:"user_id" sql:"user_id"`
+	SchemaID       string `json:"schema_id" sql:"schema_id"`
+	SchemaCode     string `json:"schema_code" sql:"schema_code"`
+	SchemaName     string `json:"schema_name" sql:"schema_name"`
+	StructureID    string `json:"structure_id" sql:"structure_id"`
+	StructureCode  string `json:"structure_code" sql:"structure_code"`
+	StructureType  string `json:"structure_type" sql:"structure_type"`
+	StructureClass string `json:"structure_class" sql:"structure_class"`
+	StructureName  string `json:"structure_name" sql:"structure_name"`
+	LanguageCode   string `json:"language_code" sql:"language_code"`
+	PermissionType int    `json:"permission_type" sql:"permission_type"`
+	Scope          string `json:"scope" sql:"scope"`
+}
+
 // ViewGroupUser defines the struct of this object
 type ViewGroupUser struct {
 	ID            string    `json:"id" sql:"id" pk:"true"`

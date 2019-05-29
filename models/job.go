@@ -104,12 +104,13 @@ type JobFollowers struct {
 	JobID        string    `json:"job_id" sql:"job_id" fk:"true"`
 	Name         string    `json:"name" sql:"name"`
 	LanguageCode string    `json:"language_code" sql:"language_code"`
+	FollowerID   string    `json:"follower_id" sql:"follower_id"`
 	FollowerType string    `json:"follower_type" sql:"follower_type"`
 	Active       bool      `json:"active" sql:"active"`
 	CreatedBy    string    `json:"created_by" sql:"created_by"`
 	CreatedAt    time.Time `json:"created_at" sql:"created_at"`
-	UpdatedBy    string    `json:"updated_by" sql:"updated_by"`
-	UpdatedAt    time.Time `json:"updated_at" sql:"updated_at"`
+	// UpdatedBy    string    `json:"updated_by" sql:"updated_by"`
+	// UpdatedAt    time.Time `json:"updated_at" sql:"updated_at"`
 }
 
 // ViewFollowerAvailable defines the struct of this object

@@ -87,6 +87,18 @@ func GetBody(r *http.Request) ([]byte, error) {
 	return bodyBytes, nil
 }
 
+// GetBodyColumns return all columns from body
+func GetBodyColumns(r *http.Request) []string {
+	body, _ := GetBody(r)
+	jsonMap := make(map[string]interface{})
+	json.Unmarshal(body, &jsonMap)
+	columns := []string{}
+	for k := range jsonMap {
+		columns = append(columns, k)
+	}
+	return columns
+}
+
 // getColumnsFromBody get request body and return an string array with columns from the body
 func getColumnsFromBody(r *http.Request, object interface{}) []string {
 	body, _ := GetBody(r)

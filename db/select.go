@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	module "github.com/agile-work/srv-mdl-shared"
+	"github.com/agile-work/srv-mdl-shared/models"
 	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
@@ -11,6 +12,7 @@ import (
 
 // Load object data from the database
 func Load(r *http.Request, object interface{}, scope, table string, conditions builder.Builder) *module.Response {
+	models.TranslationFieldsRequestLanguageCode = r.Header.Get("Content-Language")
 	response := &module.Response{
 		Code: http.StatusOK,
 	}

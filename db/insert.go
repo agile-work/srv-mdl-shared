@@ -6,12 +6,14 @@ import (
 	"reflect"
 
 	module "github.com/agile-work/srv-mdl-shared"
+	"github.com/agile-work/srv-mdl-shared/models"
 	shared "github.com/agile-work/srv-shared"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
 
 // Create object data in the database
 func Create(r *http.Request, object interface{}, scope, table string) *module.Response {
+	models.TranslationFieldsRequestLanguageCode = r.Header.Get("Content-Language")
 	response := GetResponse(r, object, scope)
 	if response.Code != http.StatusOK {
 		return response

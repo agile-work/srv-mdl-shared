@@ -20,6 +20,7 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 	}
 
 	columns := getColumnsFromBody(r, object)
+	models.TranslationFieldsRequestLanguageCode = "all"
 
 	id, err := db.InsertStruct(table, object, columns...)
 	if err != nil {

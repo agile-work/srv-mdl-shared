@@ -9,6 +9,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/agile-work/srv-mdl-shared/models"
+
 	module "github.com/agile-work/srv-mdl-shared"
 	shared "github.com/agile-work/srv-shared"
 )
@@ -100,38 +102,40 @@ func GetBodyColumns(r *http.Request) []string {
 }
 
 // getColumnsFromBody get request body and return an string array with columns from the body
-func getColumnsFromBody(r *http.Request, object interface{}) []string {
+// translations columns are not appended
+func getColumnsFromBody(r *http.Request, object interface{}, translationColumns ...string) []string {
 	body, _ := GetBody(r)
 	jsonMap := make(map[string]interface{})
 	json.Unmarshal(body, &jsonMap)
 	columns := []string{}
 	for k := range jsonMap {
-		if k != "created_by" && k != "created_at" && k != "updated_by" && k != "updated_at" {
+		if k != "created_by" && k != "created_at" && k != "updated_by" && k != "updated_at" && !isValueInList(k, translationColumns) {
 			columns = append(columns, k)
 		}
 	}
 
-	elementValue := reflect.ValueOf(object).Elem()
-
-	if r.Method == http.MethodPost {
-		elementCreatedBy := elementValue.FieldByName("CreatedBy")
-		elementCreatedAt := elementValue.FieldByName("CreatedAt")
-		if elementCreatedBy.IsValid() {
-			columns = append(columns, "created_by")
-		}
-		if elementCreatedAt.IsValid() {
-			columns = append(columns, "created_at")
-		}
-	}
-
-	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
-	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
-	if elementUpdatedBy.IsValid() {
-		columns = append(columns, "updated_by")
-	}
-	if elementUpdatedAt.IsValid() {
-		columns = append(columns, "updated_at")
-	}
+	SetSchemaAudit(r, object)
 
 	return columns
+}
+
+// GetTranslationColumns return an array with all translation columns from an object
+func GetTranslationColumns(object interface{}) []string {
+	translationColumns := []string{}
+	elementType := reflect.TypeOf(object).Elem()
+	for i := 0; i < elementType.NumField(); i++ {
+		if elementType.Field(i).Type == reflect.TypeOf(models.Translation{}) {
+			translationColumns = append(translationColumns, elementType.Field(i).Tag.Get("sql"))
+		}
+	}
+	return translationColumns
+}
+
+func isValueInList(value string, list []string) bool {
+	for _, v := range list {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

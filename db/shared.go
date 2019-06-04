@@ -102,25 +102,51 @@ func GetBodyColumns(r *http.Request) []string {
 }
 
 // getColumnsFromBody get request body and return an string array with columns from the body
-// translations columns are not appended
-func getColumnsFromBody(r *http.Request, object interface{}, translationColumns ...string) []string {
+func getColumnsFromBody(r *http.Request, object interface{}, getTranslationColumns bool) ([]string, []string, map[string]interface{}) {
+	objectTranslationColumns := []string{}
+	translationColumns := []string{}
+	if getTranslationColumns {
+		objectTranslationColumns = getObjectTranslationColumns(object)
+	}
 	body, _ := GetBody(r)
 	jsonMap := make(map[string]interface{})
 	json.Unmarshal(body, &jsonMap)
 	columns := []string{}
 	for k := range jsonMap {
-		if k != "created_by" && k != "created_at" && k != "updated_by" && k != "updated_at" && !isValueInList(k, translationColumns) {
+		if k != "created_by" && k != "created_at" && k != "updated_by" && k != "updated_at" && !isValueInList(k, objectTranslationColumns) {
 			columns = append(columns, k)
+		} else if isValueInList(k, objectTranslationColumns) {
+			translationColumns = append(translationColumns, k)
 		}
 	}
 
-	SetSchemaAudit(r, object)
+	elementValue := reflect.ValueOf(object).Elem()
 
-	return columns
+	if r.Method == http.MethodPost {
+		elementCreatedBy := elementValue.FieldByName("CreatedBy")
+		elementCreatedAt := elementValue.FieldByName("CreatedAt")
+		if elementCreatedBy.IsValid() {
+			columns = append(columns, "created_by")
+		}
+		if elementCreatedAt.IsValid() {
+			columns = append(columns, "created_at")
+		}
+	}
+
+	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
+	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
+	if elementUpdatedBy.IsValid() {
+		columns = append(columns, "updated_by")
+	}
+	if elementUpdatedAt.IsValid() {
+		columns = append(columns, "updated_at")
+	}
+
+	return columns, translationColumns, jsonMap
 }
 
-// GetTranslationColumns return an array with all translation columns from an object
-func GetTranslationColumns(object interface{}) []string {
+// getObjectTranslationColumns return an array with all translation columns from an object
+func getObjectTranslationColumns(object interface{}) []string {
 	translationColumns := []string{}
 	elementType := reflect.TypeOf(object).Elem()
 	for i := 0; i < elementType.NumField(); i++ {
@@ -132,6 +158,9 @@ func GetTranslationColumns(object interface{}) []string {
 }
 
 func isValueInList(value string, list []string) bool {
+	if list == nil || len(list) == 0 {
+		return false
+	}
 	for _, v := range list {
 		if v == value {
 			return true

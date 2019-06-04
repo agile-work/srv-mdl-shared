@@ -19,7 +19,7 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 		return response
 	}
 
-	columns := getColumnsFromBody(r, object)
+	columns, _, _ := getColumnsFromBody(r, object, false)
 	models.TranslationFieldsRequestLanguageCode = "all"
 
 	id, err := db.InsertStruct(table, object, columns...)
@@ -33,18 +33,6 @@ func Create(r *http.Request, object interface{}, scope, table string) *module.Re
 	elementValue := reflect.ValueOf(object).Elem()
 	elementID := elementValue.FieldByName("ID")
 	elementID.SetString(id)
-
-	translationColumns := GetTranslationLanguageCodeColumns(object)
-
-	if len(translationColumns) > 0 {
-		err = CreateTranslationsFromStruct(table, r.Header.Get("Content-Language"), object)
-		if err != nil {
-			response.Code = http.StatusInternalServerError
-			response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorInsertingRecord, fmt.Sprintf("%s create translation", scope), err.Error()))
-
-			return response
-		}
-	}
 
 	response.Data = object
 

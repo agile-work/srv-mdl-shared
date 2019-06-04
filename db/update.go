@@ -21,11 +21,11 @@ func Update(r *http.Request, object interface{}, scope, table string, condition 
 		return response
 	}
 
-	translationColumns := []string{}
-	if languageCode != "all" {
-		translationColumns = GetTranslationColumns(object)
+	getTranslationColumns := true
+	if languageCode == "all" {
+		getTranslationColumns = false
 	}
-	columns := getColumnsFromBody(r, object, translationColumns...)
+	columns, translationColumns, bodyValues := getColumnsFromBody(r, object, getTranslationColumns)
 
 	// TODO: change to db transaction to avoid updating one part without the translations
 	if len(columns) > 0 {
@@ -39,14 +39,10 @@ func Update(r *http.Request, object interface{}, scope, table string, condition 
 	}
 
 	if len(translationColumns) > 0 {
-		// TODO: return this jsonMap with values from the getColumnsFromBody
-		body, _ := GetBody(r)
-		jsonMap := make(map[string]interface{})
-		json.Unmarshal(body, &jsonMap)
 		statement := builder.Update(table)
 		for _, col := range translationColumns {
 			statement.JSON(col, languageCode)
-			val, _ := json.Marshal(jsonMap[col])
+			val, _ := json.Marshal(bodyValues[col])
 			statement.Values(val)
 		}
 		statement.Where(condition)

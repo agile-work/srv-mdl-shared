@@ -30,19 +30,6 @@ func Load(r *http.Request, object interface{}, scope, table string, conditions b
 		conditions = builder.And(newCondition...)
 	}
 
-	translationColumns := GetTranslationLanguageCodeColumns(object)
-
-	if len(translationColumns) > 0 {
-		newCondition := []builder.Builder{}
-		if conditions != nil {
-			newCondition = append(newCondition, conditions)
-		}
-		for _, translationColumn := range translationColumns {
-			newCondition = append(newCondition, builder.Equal(translationColumn, r.Header.Get("Content-Language")))
-		}
-		conditions = builder.And(newCondition...)
-	}
-
 	err := db.LoadStruct(table, object, conditions)
 	if err != nil {
 		response.Code = http.StatusInternalServerError

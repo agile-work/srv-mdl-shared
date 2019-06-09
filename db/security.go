@@ -11,12 +11,13 @@ import (
 
 // StructurePermission defines attirbutes to a structure
 type StructurePermission struct {
-	ID                   string          `json:"id" sql:"id" pk:"true"`
-	StructureCode        string          `json:"structure_code" sql:"structure_code"`
-	StructureType        string          `json:"structure_type" sql:"structure_type"`   // field, widget, section...
-	StructureClass       string          `json:"structure_class" sql:"structure_class"` //field: lookup_tree, text, date, number, money | widget: chart, table
-	StructureDefinitions json.RawMessage `json:"structure_definitions" sql:"structure_definitions" field:"jsonb"`
-	Permission           int             `json:"permission" sql:"permission"`
+	ID                   string          `json:"id"`
+	StructureCode        string          `json:"structure_code"`
+	StructureType        string          `json:"structure_type"`  // field, widget, section...
+	StructureClass       string          `json:"structure_class"` // field: lookup_tree, text, date, number, money | widget: chart, table
+	StructureDefinitions json.RawMessage `json:"structure_definitions" field:"jsonb"`
+	Permission           int             `json:"permission"`
+	InstanceID           string          `json:"instance_id"`
 }
 
 // UserInstancePermission get user instace permissions
@@ -42,6 +43,7 @@ func GetUserAvailableFields(userID, schemaCode, structureType, instanceID string
 			tab.structure_type AS structure_type,
 			tab.structure_class AS structure_class,
 			tab.structure_definitions AS structure_definitions,
+			tab.instance_id AS instance_id,
 			max(tab.permission) AS permission
 		FROM (
 			SELECT
@@ -59,7 +61,8 @@ func GetUserAvailableFields(userID, schemaCode, structureType, instanceID string
 				END AS structure_class,
 				unit_path.permission AS permission,
 				'unit' AS scope,
-				fld.definitions AS structure_definitions
+				fld.definitions AS structure_definitions,
+				NULL AS instance_id
 			FROM (
 				SELECT
 					res.parent_id AS user_id,
@@ -144,7 +147,8 @@ func GetUserAvailableFields(userID, schemaCode, structureType, instanceID string
 					THEN 'group'
 					ELSE 'unit_group'
 				END AS scope,
-				fld.definitions AS structure_definitions
+				fld.definitions AS structure_definitions,
+				NULL AS instance_id
 			FROM cst_resources AS res
 			JOIN (
 				SELECT 
@@ -196,7 +200,8 @@ func GetUserAvailableFields(userID, schemaCode, structureType, instanceID string
 				END AS structure_class,
 				inst.permission AS permission,
 				'instance_' || inst.source_type AS scope,
-				fld.definitions AS structure_definitions
+				fld.definitions AS structure_definitions,
+				inst.instance_id AS instance_id
 			FROM (
 				SELECT 
 					inst.user_id AS user_id,
@@ -204,7 +209,8 @@ func GetUserAvailableFields(userID, schemaCode, structureType, instanceID string
 					inst.source_type AS source_type,
 					perm->>'structure_id' AS structure_id,
 					perm->>'structure_type' AS structure_type,
-					(perm->>'permission_type')::INT AS permission
+					(perm->>'permission_type')::INT AS permission,
+					inst.instance_id AS instance_id
 				FROM 
 					core_instance_premissions inst,
 					jsonb_array_elements(inst.permissions) perm
@@ -232,7 +238,8 @@ func GetUserAvailableFields(userID, schemaCode, structureType, instanceID string
 			tab.structure_code,
 			tab.structure_type,
 			tab.structure_class,
-			tab.structure_definitions
+			tab.structure_definitions,
+			tab.instance_id
 	`)
 
 	rows, err := sql.Query(statement)

@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"time"
 
+	"gopkg.in/go-playground/validator.v9"
+
 	"github.com/agile-work/srv-shared/sql-builder/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -27,6 +29,8 @@ var (
 	dbPassword = flag.String("dbPassword", "x3FhcrWDxnxCq9p", "Database password")
 	dbName     = flag.String("dbName", "cryo", "Database name")
 )
+
+var Validate *validator.Validate
 
 // ListenAndServe default module api listen and server
 func ListenAndServe(port string, moduleRouter *chi.Mux) {
@@ -78,6 +82,8 @@ func ListenAndServe(port string, moduleRouter *chi.Mux) {
 		IdleTimeout:  60 * time.Second,
 		TLSConfig:    tlsConfig,
 	}
+
+	Validate = validator.New()
 
 	go func() {
 		fmt.Printf("Service listening on %s\n", port)

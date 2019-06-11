@@ -41,6 +41,13 @@ func GetResponse(r *http.Request, object interface{}, scope string) *module.Resp
 
 			return response
 		}
+		err = module.Validate.Struct(object)
+		if err != nil {
+			response.Code = http.StatusInternalServerError
+			response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorParsingRequest, fmt.Sprintf("%s invalid body", scope), err.Error()))
+
+			return response
+		}
 	}
 
 	SetSchemaAudit(r, object)

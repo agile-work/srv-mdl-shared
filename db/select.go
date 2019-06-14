@@ -30,7 +30,7 @@ func Load(r *http.Request, object interface{}, scope, table string, conditions b
 		conditions = builder.And(newCondition...)
 	}
 
-	err := db.LoadStruct(table, object, conditions)
+	err := db.SelectStruct(table, object, conditions)
 	if err != nil {
 		response.Code = http.StatusInternalServerError
 		response.Errors = append(response.Errors, module.NewResponseError(shared.ErrorLoadingData, scope, err.Error()))

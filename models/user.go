@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -129,8 +130,19 @@ type UserCustomClaims struct {
 // Load return user
 func (u *User) Load(userID string) error {
 	userIDColumn := fmt.Sprintf("%s.id", shared.TableCoreUsers)
-	condition := builder.Equal(userIDColumn, userID)
-	return db.LoadStruct(shared.TableCoreUsers, u, condition)
+	activeColumn := fmt.Sprintf("%s.active", shared.TableCoreUsers)
+	condition := builder.And(
+		builder.Equal(userIDColumn, userID),
+		builder.Equal(activeColumn, true),
+	)
+	err := db.SelectStruct(shared.TableCoreUsers, u, condition)
+	if err != nil {
+		return err
+	}
+	if !u.Active {
+		return errors.New("Disabled user")
+	}
+	return nil
 }
 
 // GetSecurityInstances return the initial statement to make a security query

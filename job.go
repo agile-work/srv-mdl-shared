@@ -16,7 +16,7 @@ func CreateJobInstance(ownerID string, code string, params map[string]interface{
 	condition := builder.Equal("code", code)
 	job := models.Job{}
 
-	err := db.LoadStruct(jobTable, &job, condition)
+	err := db.SelectStruct(jobTable, &job, condition)
 	if err != nil {
 		return "", err
 	}

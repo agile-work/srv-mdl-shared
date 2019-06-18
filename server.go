@@ -12,6 +12,10 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/agile-work/srv-shared/constants"
+
+	"github.com/agile-work/srv-shared/service"
+
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/agile-work/srv-shared/sql-builder/db"
@@ -20,6 +24,7 @@ import (
 )
 
 var (
+	moduleName = flag.String("name", "", "Name of this module instance")
 	addr       = flag.String("port", "", "TCP port to listen to")
 	cert       = flag.String("cert", "cert.pem", "Path to certification")
 	key        = flag.String("key", "key.pem", "Path to certification key")
@@ -30,10 +35,11 @@ var (
 	dbName     = flag.String("dbName", "cryo", "Database name")
 )
 
+// Validate global instance of the validator
 var Validate *validator.Validate
 
 // ListenAndServe default module api listen and server
-func ListenAndServe(port string, moduleRouter *chi.Mux) {
+func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)
 
@@ -43,6 +49,13 @@ func ListenAndServe(port string, moduleRouter *chi.Mux) {
 	}
 	if port == "" {
 		panic("Invalid module port")
+	}
+
+	if *moduleName != "" {
+		name = *moduleName
+	}
+	if name == "" {
+		name = "undefined"
 	}
 
 	caCert, err := ioutil.ReadFile(*cert)
@@ -64,6 +77,11 @@ func ListenAndServe(port string, moduleRouter *chi.Mux) {
 	}
 	defer db.Close()
 
+	ws, err := service.Register(name, constants.ServiceTypeModule)
+	if err != nil {
+		fmt.Printf("Unable to connect to realtome socket. Error: %s", err.Error())
+	}
+
 	router := chi.NewRouter()
 	router.Use(
 		middleware.Heartbeat("/ping"),
@@ -74,7 +92,7 @@ func ListenAndServe(port string, moduleRouter *chi.Mux) {
 	)
 	router.Mount("/api/v1", moduleRouter)
 
-	srv := &http.Server{
+	httpServer := &http.Server{
 		Addr:         port,
 		Handler:      router,
 		ReadTimeout:  60 * time.Second,
@@ -87,15 +105,16 @@ func ListenAndServe(port string, moduleRouter *chi.Mux) {
 
 	go func() {
 		fmt.Printf("Service listening on %s\n", port)
-		if err := srv.ListenAndServeTLS(*cert, *key); err != nil {
+		if err := httpServer.ListenAndServeTLS(*cert, *key); err != nil {
 			fmt.Printf("listen: %s\n", err)
 		}
 	}()
 
 	<-stopChan
-	fmt.Println("Shutting down Service...")
+	fmt.Println("\nShutting down Service...")
+	ws.Down()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	srv.Shutdown(ctx)
+	httpServer.Shutdown(ctx)
 	defer cancel()
 	fmt.Println("Service stopped!")
 }

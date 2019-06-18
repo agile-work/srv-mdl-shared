@@ -6,17 +6,16 @@ import (
 
 	"github.com/agile-work/srv-mdl-shared/models"
 	shared "github.com/agile-work/srv-shared"
-	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
 
 // CreateJobInstance create a new job instance
 func CreateJobInstance(ownerID string, code string, params map[string]interface{}) (string, error) {
 	jobTable := shared.TableCoreJobs
-	condition := builder.Equal("code", code)
+	//TODO replace with options -> condition := builder.Equal("code", code)
 	job := models.Job{}
 
-	err := db.SelectStruct(jobTable, &job, condition)
+	err := db.SelectStruct(jobTable, &job, nil)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +45,7 @@ func CreateJobInstance(ownerID string, code string, params map[string]interface{
 // fillParameters fill parameters with values
 func fillParameters(params []models.Param, values map[string]interface{}) ([]models.Param, error) {
 	if len(params) != len(values) {
-		return nil, errors.New("The number of parameters can not be different from the number of values")
+		return nil, errors.New("the number of parameters can not be different from the number of values")
 	}
 
 	result := []models.Param{}
@@ -55,7 +54,7 @@ func fillParameters(params []models.Param, values map[string]interface{}) ([]mod
 			param.Value = value.(string)
 			result = append(result, param)
 		} else {
-			return nil, errors.New("Parameter invalid")
+			return nil, errors.New("parameter invalid")
 		}
 	}
 

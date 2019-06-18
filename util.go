@@ -8,8 +8,10 @@ import (
 	"reflect"
 
 	"github.com/agile-work/srv-mdl-shared/models"
+	"github.com/agile-work/srv-shared/util"
 )
 
+// GetColumnsFromBody returns regular columns and json columns slice from request body
 func GetColumnsFromBody(body []byte, object interface{}) ([]string, map[string]string, error) {
 	jsonMap := make(map[string]interface{})
 	if err := json.Unmarshal(body, &jsonMap); err != nil {
@@ -22,9 +24,9 @@ func GetColumnsFromBody(body []byte, object interface{}) ([]string, map[string]s
 	columns := []string{}
 	translations := make(map[string]string)
 	for k, v := range jsonMap {
-		if k != "created_by" && k != "created_at" && k != "updated_by" && k != "updated_at" && !isValueInList(k, objectTranslationColumns) {
+		if k != "created_by" && k != "created_at" && k != "updated_by" && k != "updated_at" && !util.Contains(objectTranslationColumns, k) {
 			columns = append(columns, k)
-		} else if isValueInList(k, objectTranslationColumns) {
+		} else if util.Contains(objectTranslationColumns, k) {
 			translations[k] = v.(string)
 		}
 	}
@@ -55,16 +57,4 @@ func getObjectTranslationColumns(object interface{}) []string {
 		}
 	}
 	return translationColumns
-}
-
-func isValueInList(value string, list []string) bool {
-	if list == nil || len(list) == 0 {
-		return false
-	}
-	for _, v := range list {
-		if v == value {
-			return true
-		}
-	}
-	return false
 }

@@ -1,21 +1,28 @@
-package models
+package job
 
-import "time"
+import (
+	"errors"
+	"time"
+
+	mdlSharedModels "github.com/agile-work/srv-mdl-shared/models"
+	"github.com/agile-work/srv-shared/constants"
+	"github.com/agile-work/srv-shared/sql-builder/db"
+)
 
 // Job defines the struct of this object
 type Job struct {
-	ID          string    `json:"id" sql:"id" pk:"true"`
-	Code        string    `json:"code" sql:"code"`
-	Name        string    `json:"name" table:"core_translations" alias:"core_translations_name" sql:"value" on:"core_translations_name.structure_id = core_jobs.id and core_translations_name.structure_field = 'name'"`
-	Description string    `json:"description" table:"core_translations" alias:"core_translations_description" sql:"value" on:"core_translations_description.structure_id = core_jobs.id and core_translations_description.structure_field = 'description'"`
-	JobType     string    `json:"job_type" sql:"job_type"`
-	ExecTimeout int       `json:"exec_timeout" sql:"exec_timeout"`
-	Params      []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
-	Active      bool      `json:"active" sql:"active"`
-	CreatedBy   string    `json:"created_by" sql:"created_by"`
-	CreatedAt   time.Time `json:"created_at" sql:"created_at"`
-	UpdatedBy   string    `json:"updated_by" sql:"updated_by"`
-	UpdatedAt   time.Time `json:"updated_at" sql:"updated_at"`
+	ID          string                      `json:"id" sql:"id" pk:"true"`
+	Code        string                      `json:"code" sql:"code"`
+	Name        mdlSharedModels.Translation `json:"name" sql:"name" field:"jsonb" validate:"required"`
+	Description mdlSharedModels.Translation `json:"description" sql:"description" field:"jsonb"`
+	JobType     string                      `json:"job_type" sql:"job_type"`
+	ExecTimeout int                         `json:"exec_timeout" sql:"exec_timeout"`
+	Params      []Param                     `json:"parameters" sql:"parameters" field:"jsonb"`
+	Active      bool                        `json:"active" sql:"active"`
+	CreatedBy   string                      `json:"created_by" sql:"created_by"`
+	CreatedAt   time.Time                   `json:"created_at" sql:"created_at"`
+	UpdatedBy   string                      `json:"updated_by" sql:"updated_by"`
+	UpdatedAt   time.Time                   `json:"updated_at" sql:"updated_at"`
 }
 
 // ViewJobInstance defines the struct of this object
@@ -39,29 +46,27 @@ type ViewJobInstance struct {
 
 // JobTask defines the struct of this object
 type JobTask struct {
-	ID               string    `json:"id" sql:"id" pk:"true"`
-	Code             string    `json:"code" sql:"code"`
-	Name             string    `json:"name" table:"core_translations" alias:"core_translations_name" sql:"value" on:"core_translations_name.structure_id = core_job_tasks.id and core_translations_name.structure_field = 'name'"`
-	Description      string    `json:"description" table:"core_translations" alias:"core_translations_description" sql:"value" on:"core_translations_description.structure_id = core_job_tasks.id and core_translations_description.structure_field = 'description'"`
-	JobID            string    `json:"job_id" sql:"job_id" fk:"true"`
-	TaskSequence     int       `json:"task_sequence" sql:"task_sequence"`
-	ExecTimeout      int       `json:"exec_timeout" sql:"exec_timeout"`
-	Params           []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
-	ParentID         string    `json:"parent_id" sql:"parent_id" fk:"true"`
-	ExecAction       string    `json:"exec_action" sql:"exec_action"`
-	ExecAddress      string    `json:"exec_address" sql:"exec_address"`
-	ExecPayload      string    `json:"exec_payload" sql:"exec_payload"`
-	ActionOnFail     string    `json:"action_on_fail" sql:"action_on_fail"`
-	MaxRetryAttempts int       `json:"max_retry_attempts" sql:"max_retry_attempts"`
-	RollbackAction   string    `json:"rollback_action" sql:"rollback_action"`
-	RollbackAddress  string    `json:"rollback_address" sql:"rollback_address"`
-	RollbackPayload  string    `json:"rollback_payload" sql:"rollback_payload"`
-	CreatedBy        string    `json:"created_by" sql:"created_by"`
-	CreatedByUser    *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_job_tasks.created_by"`
-	CreatedAt        time.Time `json:"created_at" sql:"created_at"`
-	UpdatedBy        string    `json:"updated_by" sql:"updated_by"`
-	UpdatedByUser    *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_job_tasks.updated_by"`
-	UpdatedAt        time.Time `json:"updated_at" sql:"updated_at"`
+	ID               string                      `json:"id" sql:"id" pk:"true"`
+	Code             string                      `json:"code" sql:"code"`
+	Name             mdlSharedModels.Translation `json:"name" sql:"name" field:"jsonb" validate:"required"`
+	Description      mdlSharedModels.Translation `json:"description" sql:"description" field:"jsonb"`
+	JobID            string                      `json:"job_id" sql:"job_id" fk:"true"`
+	TaskSequence     int                         `json:"task_sequence" sql:"task_sequence"`
+	ExecTimeout      int                         `json:"exec_timeout" sql:"exec_timeout"`
+	Params           []Param                     `json:"parameters" sql:"parameters" field:"jsonb"`
+	ParentID         string                      `json:"parent_id" sql:"parent_id" fk:"true"`
+	ExecAction       string                      `json:"exec_action" sql:"exec_action"`
+	ExecAddress      string                      `json:"exec_address" sql:"exec_address"`
+	ExecPayload      string                      `json:"exec_payload" sql:"exec_payload"`
+	ActionOnFail     string                      `json:"action_on_fail" sql:"action_on_fail"`
+	MaxRetryAttempts int                         `json:"max_retry_attempts" sql:"max_retry_attempts"`
+	RollbackAction   string                      `json:"rollback_action" sql:"rollback_action"`
+	RollbackAddress  string                      `json:"rollback_address" sql:"rollback_address"`
+	RollbackPayload  string                      `json:"rollback_payload" sql:"rollback_payload"`
+	CreatedBy        string                      `json:"created_by" sql:"created_by"`
+	CreatedAt        time.Time                   `json:"created_at" sql:"created_at"`
+	UpdatedBy        string                      `json:"updated_by" sql:"updated_by"`
+	UpdatedAt        time.Time                   `json:"updated_at" sql:"updated_at"`
 }
 
 // ViewJobTaskInstance defines the struct of this object
@@ -91,10 +96,8 @@ type ViewJobTaskInstance struct {
 	FinishAt         time.Time `json:"finish_at" sql:"finish_at"`
 	Status           string    `json:"status" sql:"status"`
 	CreatedBy        string    `json:"created_by" sql:"created_by"`
-	CreatedByUser    *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_v_core_job_task_instance.created_by"`
 	CreatedAt        time.Time `json:"created_at" sql:"created_at"`
 	UpdatedBy        string    `json:"updated_by" sql:"updated_by"`
-	UpdatedByUser    *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_v_core_job_task_instance.updated_by"`
 	UpdatedAt        time.Time `json:"updated_at" sql:"updated_at"`
 }
 
@@ -121,10 +124,8 @@ type ViewFollowerAvailable struct {
 	FollowerAvailableType string    `json:"ug_type" sql:"ug_type"`
 	Active                bool      `json:"active" sql:"active"`
 	CreatedBy             string    `json:"created_by" sql:"created_by"`
-	CreatedByUser         *User     `json:"created_by_user" table:"core_users" alias:"created_by_user" on:"created_by_user.id = core_v_users_and_groups.created_by"`
 	CreatedAt             time.Time `json:"created_at" sql:"created_at"`
 	UpdatedBy             string    `json:"updated_by" sql:"updated_by"`
-	UpdatedByUser         *User     `json:"updated_by_user" table:"core_users" alias:"updated_by_user" on:"updated_by_user.id = core_v_users_and_groups.updated_by"`
 	UpdatedAt             time.Time `json:"updated_at" sql:"updated_at"`
 }
 
@@ -152,4 +153,56 @@ type JobInstance struct {
 	CreatedAt   time.Time `json:"created_at" sql:"created_at"`
 	UpdatedBy   string    `json:"updated_by" sql:"updated_by"`
 	UpdatedAt   time.Time `json:"updated_at" sql:"updated_at"`
+}
+
+// CreateInstance create a new job instance
+func CreateInstance(ownerID string, code string, params map[string]interface{}) (string, error) {
+	jobTable := constants.TableCoreJobs
+	//TODO replace with options -> condition := builder.Equal("code", code)
+	job := Job{}
+
+	err := db.SelectStruct(jobTable, &job, nil)
+	if err != nil {
+		return "", err
+	}
+
+	jobInstanceParams, err := fillParameters(job.Params, params)
+	if err != nil {
+		return "", err
+	}
+
+	jobInstanceTable := constants.TableCoreJobInstances
+	date := time.Now()
+	jobInstance := JobInstance{
+		JobID:       job.ID,
+		Code:        job.Code,
+		ExecTimeout: job.ExecTimeout,
+		Params:      jobInstanceParams,
+		Status:      constants.JobStatusCreating,
+		CreatedBy:   ownerID,
+		CreatedAt:   date,
+		UpdatedBy:   ownerID,
+		UpdatedAt:   date,
+	}
+
+	return db.InsertStruct(jobInstanceTable, &jobInstance)
+}
+
+// fillParameters fill parameters with values
+func fillParameters(params []Param, values map[string]interface{}) ([]Param, error) {
+	if len(params) != len(values) {
+		return nil, errors.New("the number of parameters can not be different from the number of values")
+	}
+
+	result := []Param{}
+	for _, param := range params {
+		if value, ok := values[param.Key]; ok {
+			param.Value = value.(string)
+			result = append(result, param)
+		} else {
+			return nil, errors.New("parameter invalid")
+		}
+	}
+
+	return result, nil
 }

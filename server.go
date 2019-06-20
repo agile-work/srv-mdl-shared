@@ -79,7 +79,7 @@ func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 
 	ws, err := service.Register(name, constants.ServiceTypeModule)
 	if err != nil {
-		fmt.Printf("Unable to connect to realtome socket. Error: %s", err.Error())
+		fmt.Printf("Unable to connect to realtime socket. Error: %s", err.Error())
 	}
 
 	router := chi.NewRouter()

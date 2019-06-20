@@ -12,6 +12,9 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/agile-work/srv-mdl-shared/models/translation"
+	"github.com/agile-work/srv-shared/util"
+
 	"github.com/agile-work/srv-shared/constants"
 
 	"github.com/agile-work/srv-shared/service"
@@ -79,7 +82,12 @@ func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 
 	ws, err := service.Register(name, constants.ServiceTypeModule)
 	if err != nil {
-		fmt.Printf("Unable to connect to realtime socket. Error: %s", err.Error())
+		fmt.Printf("\nUnable to connect to realtime socket. Error: %s", err.Error())
+	}
+
+	params, err := util.GetSystemParams()
+	if err == nil {
+		translation.SystemDefaultLanguageCode = params[constants.SysParamLanguageCode]
 	}
 
 	router := chi.NewRouter()

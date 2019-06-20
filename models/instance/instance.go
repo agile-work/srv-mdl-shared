@@ -108,7 +108,7 @@ type InstancePermission struct {
 
 // // LoadLookupInstance return only one instance from the object in the database
 // func LoadLookupInstance(r *http.Request) *mdlShared.Response {
-// 	modulemdlSharedModels.TranslationFieldsRequestLanguageCode = r.Header.Get("Content-Language")
+// 	moduletranslation.FieldsRequestLanguageCode = r.Header.Get("Content-Language")
 // 	response := &mdlShared.Response{
 // 		Code: http.StatusOK,
 // 	}

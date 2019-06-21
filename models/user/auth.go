@@ -40,6 +40,7 @@ func (u *User) Login() error {
 	u.SecurityInstances = nil
 
 	payload := make(map[string]interface{})
+	payload["user_id"] = u.ID
 	payload["code"] = u.Username
 	payload["language_code"] = u.LanguageCode
 

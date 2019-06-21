@@ -9,7 +9,7 @@ import (
 	shared "github.com/agile-work/srv-mdl-shared"
 	"github.com/agile-work/srv-mdl-shared/models/customerror"
 
-	"github.com/agile-work/srv-shared/util"
+	"github.com/agile-work/srv-mdl-shared/util"
 
 	"github.com/go-chi/render"
 )
@@ -17,9 +17,9 @@ import (
 // Response defines the struct to the api response
 type Response struct {
 	Code     int         `json:"code"`
-	Metadata Metadata    `json:"metadata"`
-	Data     interface{} `json:"data"`
-	Error    error       `json:"errors"`
+	Metadata Metadata    `json:"metadata,omitempty"`
+	Data     interface{} `json:"data,omitempty"`
+	Error    error       `json:"error,omitempty"`
 }
 
 // Render return a http response
@@ -43,29 +43,6 @@ func (r *Response) NewError(scope string, err error) {
 
 // Parse get request body to object and creates a response
 func (r *Response) Parse(req *http.Request, object interface{}) error {
-	r.Code = http.StatusOK
-	body, _ := util.GetBody(req)
-	if len(body) > 0 {
-		err := json.Unmarshal(body, object)
-		if err != nil {
-			return customerror.New(http.StatusBadRequest, "response load unmarshal body", err.Error())
-		}
-		if req.Method == http.MethodPost {
-			err = shared.Validate.Struct(object)
-			if err != nil {
-				return customerror.New(http.StatusBadRequest, "response load invalid body", err.Error())
-			}
-		}
-	}
-
-	util.SetSchemaAudit(req, object)
-	return nil
-}
-
-// TODO: Deprecated
-
-// Load get request body to object and creates a response
-func (r *Response) Load(req *http.Request, object interface{}) error {
 	r.Code = http.StatusOK
 	body, _ := util.GetBody(req)
 	if len(body) > 0 {

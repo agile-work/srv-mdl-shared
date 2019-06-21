@@ -70,7 +70,7 @@ type InstancePermission struct {
 // 		return response
 // 	}
 
-// 	response.Data = results
+// 	resp.Data = results
 
 // 	return response
 // }
@@ -134,6 +134,6 @@ type InstancePermission struct {
 // 		return response
 // 	}
 
-// 	response.Data = results
+// 	resp.Data = results
 // 	return response
 // }

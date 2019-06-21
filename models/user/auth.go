@@ -11,13 +11,13 @@ import (
 )
 
 // Login validate credentials and return user token
-func (u *User) Login(trs *db.Transaction) error {
+func (u *User) Login() error {
 	if u.Email == "" || u.Password == "" {
 		return customerror.New(http.StatusBadRequest, "user login", "invalid credentials body")
 	}
 
 	password := u.Password
-	if err := db.SelectStructTx(trs.Tx, constants.TableCoreUsers, u, &db.Options{
+	if err := db.SelectStruct(constants.TableCoreUsers, u, &db.Options{
 		Conditions: builder.Equal("email", u.Email),
 	}); err != nil {
 		return customerror.New(http.StatusInternalServerError, "user login load user", err.Error())

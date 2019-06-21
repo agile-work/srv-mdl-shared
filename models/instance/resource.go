@@ -43,7 +43,7 @@ package instance
 // 		return response
 // 	}
 
-// 	response.Data = results
+// 	resp.Data = results
 // 	return response
 // }
 
@@ -94,7 +94,7 @@ package instance
 // 	}
 
 // 	if len(results) > 0 {
-// 		response.Data = results[0]
+// 		resp.Data = results[0]
 // 	}
 // 	return response
 // }

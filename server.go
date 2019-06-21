@@ -12,6 +12,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/agile-work/srv-mdl-shared/middlewares"
+
 	"github.com/agile-work/srv-mdl-shared/models/translation"
 	"github.com/agile-work/srv-shared/util"
 
@@ -97,6 +99,7 @@ func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 		middleware.DefaultCompress,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
+		middlewares.Translation,
 	)
 	router.Mount("/api/v1", moduleRouter)
 

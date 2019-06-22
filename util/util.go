@@ -50,8 +50,11 @@ func GetBodyMap(r *http.Request) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal(body, &jsonMap); err != nil {
-		return nil, err
+
+	if len(body) > 0 {
+		if err := json.Unmarshal(body, &jsonMap); err != nil {
+			return nil, err
+		}
 	}
 
 	return jsonMap, nil

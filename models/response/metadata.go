@@ -21,8 +21,8 @@ type Metadata struct {
 
 // Load gets metadata from request
 func (m *Metadata) Load(req *http.Request) error {
-	metaDataStr := req.URL.Query().Get("metadata")
-	if err := json.Unmarshal([]byte(metaDataStr), m); err != nil {
+	metadataStr := req.URL.Query().Get("metadata")
+	if err := json.Unmarshal([]byte(metadataStr), m); err != nil {
 		return customerror.New(http.StatusBadRequest, "metadata load unmarshal", err.Error())
 	}
 	return nil

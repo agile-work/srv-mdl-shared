@@ -12,6 +12,7 @@ import (
 
 	"github.com/agile-work/srv-shared/util"
 
+	"github.com/agile-work/srv-mdl-shared/models/customerror"
 	"github.com/agile-work/srv-mdl-shared/models/translation"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
@@ -23,7 +24,7 @@ func LoadSQLOptionsFromURLQuery(query url.Values, opt *db.Options) {
 }
 
 // GetColumnsFromBody get a body and return an string array with columns from the body
-func GetColumnsFromBody(body map[string]interface{}, object interface{}) ([]string, map[string]string, error) {
+func GetColumnsFromBody(body map[string]interface{}, object interface{}) ([]string, map[string]string) {
 	objectTranslationColumns := []string{}
 	if translation.FieldsRequestLanguageCode != "all" {
 		objectTranslationColumns = getObjectTranslationColumns(object)
@@ -40,7 +41,7 @@ func GetColumnsFromBody(body map[string]interface{}, object interface{}) ([]stri
 	columns = append(columns, "updated_by")
 	columns = append(columns, "updated_at")
 
-	return columns, translations, nil
+	return columns, translations
 }
 
 // GetBodyMap get request body while maintaining the value in the request
@@ -48,12 +49,12 @@ func GetBodyMap(r *http.Request) (map[string]interface{}, error) {
 	jsonMap := make(map[string]interface{})
 	body, err := GetBody(r)
 	if err != nil {
-		return nil, err
+		return nil, customerror.New(http.StatusBadRequest, "GetBodyMap get body", err.Error())
 	}
 
 	if len(body) > 0 {
 		if err := json.Unmarshal(body, &jsonMap); err != nil {
-			return nil, err
+			return nil, customerror.New(http.StatusBadRequest, "GetBodyMap parse", err.Error())
 		}
 	}
 
@@ -67,7 +68,7 @@ func GetBody(r *http.Request) ([]byte, error) {
 	if r.Body != nil {
 		bodyBytes, err = ioutil.ReadAll(r.Body)
 		if err != nil {
-			return nil, err
+			return nil, customerror.New(http.StatusBadRequest, "GetBody read", err.Error())
 		}
 	}
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -98,7 +99,7 @@ func GetBodyColumns(body map[string]interface{}) []string {
 
 // SetSchemaAudit load user and time to audit fields
 func SetSchemaAudit(r *http.Request, object interface{}) {
-	userID := r.Header.Get("userID")
+	code := r.Header.Get("code")
 	now := time.Now()
 	elementValue := reflect.ValueOf(object).Elem()
 
@@ -106,7 +107,7 @@ func SetSchemaAudit(r *http.Request, object interface{}) {
 		elementCreatedBy := elementValue.FieldByName("CreatedBy")
 		elementCreatedAt := elementValue.FieldByName("CreatedAt")
 		if elementCreatedBy.IsValid() {
-			elementCreatedBy.SetString(userID)
+			elementCreatedBy.SetString(code)
 		}
 		if elementCreatedAt.IsValid() {
 			elementCreatedAt.Set(reflect.ValueOf(now))
@@ -116,7 +117,7 @@ func SetSchemaAudit(r *http.Request, object interface{}) {
 	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
 	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
 	if elementUpdatedBy.IsValid() {
-		elementUpdatedBy.SetString(userID)
+		elementUpdatedBy.SetString(code)
 	}
 	if elementUpdatedAt.IsValid() {
 		elementUpdatedAt.Set(reflect.ValueOf(now))

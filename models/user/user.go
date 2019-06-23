@@ -27,12 +27,12 @@ func (u *Users) LoadAll(opt *db.Options) error {
 // User defines the struct of this object
 type User struct {
 	ID                string             `json:"id" sql:"id" pk:"true"`
-	Username          string             `json:"username" sql:"username"`
-	FirstName         string             `json:"first_name" sql:"first_name"`
-	LastName          string             `json:"last_name" sql:"last_name"`
-	Email             string             `json:"email" sql:"email"`
-	Password          string             `json:"password,omitempty" sql:"password"`
-	LanguageCode      string             `json:"language_code" sql:"language_code"`
+	Username          string             `json:"username" sql:"username" updatable:"false" validate:"required"`
+	FirstName         string             `json:"first_name" sql:"first_name" validate:"required"`
+	LastName          string             `json:"last_name" sql:"last_name" validate:"required"`
+	Email             string             `json:"email" sql:"email" updatable:"false" validate:"required"`
+	Password          string             `json:"password,omitempty" sql:"password" updatable:"false" validate:"required"`
+	LanguageCode      string             `json:"language_code" sql:"language_code" validate:"required"`
 	ReceiveEmails     string             `json:"receive_emails" sql:"receive_emails"`
 	Security          *security          `json:"security,omitempty" sql:"security" field:"jsonb"`
 	SecurityInstances *securityInstances `json:"security_instances,omitempty" sql:"security_instances" field:"jsonb"`

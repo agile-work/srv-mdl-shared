@@ -105,35 +105,3 @@ type InstancePermission struct {
 
 // 	return db.Remove(r, "DeleteInstance", table, condition)
 // }
-
-// // LoadLookupInstance return only one instance from the object in the database
-// func LoadLookupInstance(r *http.Request) *mdlShared.Response {
-// 	moduletranslation.FieldsRequestLanguageCode = r.Header.Get("Content-Language")
-// 	response := &mdlShared.Response{
-// 		Code: http.StatusOK,
-// 	}
-
-// 	lookup := &lookup.Lookup{}
-// 	lookupCode := chi.URLParam(r, "lookup_code")
-// 	lookupIDColumn := fmt.Sprintf("%s.code", shared.TableCoreLookups)
-// 	condition := builder.Equal(lookupIDColumn, lookupCode)
-
-// 	err := sql.SelectStruct(shared.TableCoreLookups, lookup, condition)
-// 	if err != nil {
-// 		response.Code = http.StatusInternalServerError
-// 		response.Errors = append(response.Errors, mdlShared.NewResponseError(shared.ErrorLoadingData, "LoadLookupInstance", err.Error()))
-
-// 		return response
-// 	}
-
-// 	results, err := lookup.GetInstances()
-// 	if err != nil {
-// 		response.Code = http.StatusInternalServerError
-// 		response.Errors = append(response.Errors, mdlShared.NewResponseError(shared.ErrorLoadingData, "LoadLookupInstance load instances", err.Error()))
-
-// 		return response
-// 	}
-
-// 	resp.Data = results
-// 	return response
-// }

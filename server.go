@@ -7,15 +7,18 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/agile-work/srv-mdl-shared/middlewares"
 
 	"github.com/agile-work/srv-mdl-shared/models/translation"
 	"github.com/agile-work/srv-shared/rdb"
+	"github.com/agile-work/srv-shared/service"
 	"github.com/agile-work/srv-shared/socket"
 	"github.com/agile-work/srv-shared/util"
 
@@ -31,7 +34,6 @@ import (
 var (
 	cert       = flag.String("cert", "cert.pem", "Path to certification")
 	key        = flag.String("key", "key.pem", "Path to certification key")
-	mdlName    = flag.String("mdlName", "undefined", "Module instance name")
 	mdlHost    = flag.String("mdlHost", "", "Module host")
 	mdlPort    = flag.Int("mdlPort", -1, "Module port")
 	dbHost     = flag.String("dbHost", "cryo.cdnm8viilrat.us-east-2.rds-preview.amazonaws.com", "Database host")
@@ -61,11 +63,12 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	if *mdlHost != "" {
 		host = *mdlHost
 	}
-	if *mdlName != "undefined" {
-		name = *mdlName
-	}
 
-	fmt.Printf("Starting Module %s...\n", name)
+	pid := os.Getpid()
+	module := service.New(name, constants.ServiceTypeModule, host, port, pid)
+
+	fmt.Printf("Starting Module %s...\n", module.Name)
+	fmt.Printf("[Instance: %s | PID: %d]\n", module.InstanceCode, module.PID)
 
 	caCert, err := ioutil.ReadFile(*cert)
 	if err != nil {
@@ -90,7 +93,7 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	rdb.Init(*redisHost, *redisPort, *redisPass)
 	defer rdb.Close()
 
-	socket.Init(name, constants.ServiceTypeModule, *wsHost, *wsPort)
+	socket.Init(module, *wsHost, *wsPort)
 	defer socket.Close()
 
 	params, err := util.GetSystemParams()
@@ -121,8 +124,13 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	Validate = validator.New()
 
 	go func() {
-		fmt.Printf("Service %s pid:%d listening on %d\n", name, os.Getpid(), port)
-		httpServer.ListenAndServeTLS(*cert, *key)
+		fmt.Printf("Service %s listening on %d\n", name, port)
+		if err := httpServer.ListenAndServeTLS(*cert, *key); err != nil {
+			if strings.Contains(err.Error(), "bind: address already in use") {
+				fmt.Println("")
+				log.Fatalf("port %d already in use\n", port)
+			}
+		}
 	}()
 
 	<-stopChan

@@ -29,10 +29,11 @@ import (
 )
 
 var (
-	moduleName = flag.String("name", "", "Name of this module instance")
-	addr       = flag.String("port", "", "TCP port to listen to")
 	cert       = flag.String("cert", "cert.pem", "Path to certification")
 	key        = flag.String("key", "key.pem", "Path to certification key")
+	mdlName    = flag.String("mdlName", "undefined", "Module instance name")
+	mdlHost    = flag.String("mdlHost", "", "Module host")
+	mdlPort    = flag.Int("mdlPort", -1, "Module port")
 	dbHost     = flag.String("dbHost", "cryo.cdnm8viilrat.us-east-2.rds-preview.amazonaws.com", "Database host")
 	dbPort     = flag.Int("dbPort", 5432, "Database port")
 	dbUser     = flag.String("dbUser", "cryoadmin", "Database user")
@@ -49,23 +50,19 @@ var (
 var Validate *validator.Validate
 
 // ListenAndServe default module api listen and server
-func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
+func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)
 
 	flag.Parse()
-	if *addr != "" {
-		port = *addr
+	if *mdlPort != -1 {
+		port = *mdlPort
 	}
-	if port == "" {
-		panic("Invalid module port")
+	if *mdlHost != "" {
+		host = *mdlHost
 	}
-
-	if *moduleName != "" {
-		name = *moduleName
-	}
-	if name == "" {
-		name = "undefined"
+	if *mdlName != "undefined" {
+		name = *mdlName
 	}
 
 	fmt.Printf("Starting Module %s...\n", name)
@@ -91,11 +88,9 @@ func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 	fmt.Println("Database connected")
 
 	rdb.Init(*redisHost, *redisPort, *redisPass)
-	go rdb.HandleReconnection(5)
 	defer rdb.Close()
 
 	socket.Init(name, constants.ServiceTypeModule, *wsHost, *wsPort)
-	go socket.HandleReconnection(5)
 	defer socket.Close()
 
 	params, err := util.GetSystemParams()
@@ -115,7 +110,7 @@ func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 	router.Mount("/api/v1", moduleRouter)
 
 	httpServer := &http.Server{
-		Addr:         port,
+		Addr:         fmt.Sprintf("%s:%d", host, port),
 		Handler:      router,
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
@@ -126,7 +121,7 @@ func ListenAndServe(name, port string, moduleRouter *chi.Mux) {
 	Validate = validator.New()
 
 	go func() {
-		fmt.Printf("Service listening on %s\n", port)
+		fmt.Printf("Service %s pid:%d listening on %d\n", name, os.Getpid(), port)
 		httpServer.ListenAndServeTLS(*cert, *key)
 	}()
 

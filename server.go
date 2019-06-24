@@ -34,8 +34,8 @@ import (
 var (
 	cert       = flag.String("cert", "cert.pem", "Path to certification")
 	key        = flag.String("key", "key.pem", "Path to certification key")
-	mdlHost    = flag.String("mdlHost", "", "Module host")
-	mdlPort    = flag.Int("mdlPort", -1, "Module port")
+	mdlHost    = flag.String("host", "", "Module host")
+	mdlPort    = flag.Int("port", -1, "Module port")
 	dbHost     = flag.String("dbHost", "cryo.cdnm8viilrat.us-east-2.rds-preview.amazonaws.com", "Database host")
 	dbPort     = flag.Int("dbPort", 5432, "Database port")
 	dbUser     = flag.String("dbUser", "cryoadmin", "Database user")
@@ -113,7 +113,7 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	router.Mount("/api/v1", moduleRouter)
 
 	httpServer := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", host, port),
+		Addr:         module.URL(),
 		Handler:      router,
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
@@ -127,11 +127,33 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 		fmt.Printf("Service %s listening on %d\n", name, port)
 		if err := httpServer.ListenAndServeTLS(*cert, *key); err != nil {
 			if strings.Contains(err.Error(), "bind: address already in use") {
+				if err := rdb.Delete("module:def:" + module.InstanceCode); err != nil {
+					fmt.Println(err)
+				}
+				if _, err := rdb.LRem("api:modules", 0, module.InstanceCode); err != nil {
+					fmt.Println(err)
+				}
 				fmt.Println("")
 				log.Fatalf("port %d already in use\n", port)
 			}
 		}
 	}()
+
+	rdb.LPush("api:modules", module.InstanceCode)
+	rdb.Set("module:def:"+module.InstanceCode, module.JSON(), 0)
+
+	deadline := time.Now().Add(15 * time.Second)
+	for {
+		if socket.Available() || time.Now().After(deadline) {
+			if err := socket.Emit(socket.Message{
+				Recipients: []string{"service.api"},
+				Data:       "reload",
+			}); err != nil {
+				fmt.Println(err)
+			}
+			break
+		}
+	}
 
 	<-stopChan
 	fmt.Println("\nShutting down Service...")

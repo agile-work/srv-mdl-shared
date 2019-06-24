@@ -99,7 +99,7 @@ func GetBodyColumns(body map[string]interface{}) []string {
 
 // SetSchemaAudit load user and time to audit fields
 func SetSchemaAudit(r *http.Request, object interface{}) {
-	code := r.Header.Get("code")
+	username := r.Header.Get("username")
 	now := time.Now()
 	elementValue := reflect.ValueOf(object).Elem()
 
@@ -107,7 +107,7 @@ func SetSchemaAudit(r *http.Request, object interface{}) {
 		elementCreatedBy := elementValue.FieldByName("CreatedBy")
 		elementCreatedAt := elementValue.FieldByName("CreatedAt")
 		if elementCreatedBy.IsValid() {
-			elementCreatedBy.SetString(code)
+			elementCreatedBy.SetString(username)
 		}
 		if elementCreatedAt.IsValid() {
 			elementCreatedAt.Set(reflect.ValueOf(now))
@@ -117,7 +117,7 @@ func SetSchemaAudit(r *http.Request, object interface{}) {
 	elementUpdatedBy := elementValue.FieldByName("UpdatedBy")
 	elementUpdatedAt := elementValue.FieldByName("UpdatedAt")
 	if elementUpdatedBy.IsValid() {
-		elementUpdatedBy.SetString(code)
+		elementUpdatedBy.SetString(username)
 	}
 	if elementUpdatedAt.IsValid() {
 		elementUpdatedAt.Set(reflect.ValueOf(now))

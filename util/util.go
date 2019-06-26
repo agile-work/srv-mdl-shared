@@ -123,3 +123,16 @@ func SetSchemaAudit(r *http.Request, object interface{}) {
 		elementUpdatedAt.Set(reflect.ValueOf(now))
 	}
 }
+
+// Unique returns a slice with unique itens
+func Unique(slice []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range slice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}

@@ -43,6 +43,18 @@ func (t Translation) String(code string) string {
 	return ""
 }
 
+// JSONString returns the translation like json string
+func (t Translation) JSONString() (string, error) {
+	langTemp := FieldsRequestLanguageCode
+	FieldsRequestLanguageCode = "all"
+	languageByte, err := json.Marshal(t.Language)
+	if err != nil {
+		return "", err
+	}
+	FieldsRequestLanguageCode = langTemp
+	return string(languageByte), nil
+}
+
 // GetAvailable always return a value for a translation field
 func (t Translation) GetAvailable(code string) string {
 	val := t.String(code)

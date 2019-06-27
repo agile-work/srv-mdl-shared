@@ -159,6 +159,18 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	fmt.Println("\nShutting down Service...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	httpServer.Shutdown(ctx)
+	if err := rdb.Delete("module:def:" + module.InstanceCode); err != nil {
+		fmt.Println(err)
+	}
+	if _, err := rdb.LRem("api:modules", 0, module.InstanceCode); err != nil {
+		fmt.Println(err)
+	}
+	if err := socket.Emit(socket.Message{
+		Recipients: []string{"service.api"},
+		Data:       "reload",
+	}); err != nil {
+		fmt.Println(err)
+	}
 	defer cancel()
 	fmt.Println("Service stopped!")
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/agile-work/srv-shared/util"
+
 	"github.com/agile-work/srv-shared/constants"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
@@ -71,7 +73,7 @@ func (u *User) GetSecurityInstances(schemaCode string, opt *db.Options) ([]map[s
 }
 
 // GetSecurityQueryWithSub return the initial statement to make a security query
-func (u *User) GetSecurityQueryWithSub(schemaCode string, subSelect interface{}) (*builder.Statement, error) {
+func (u *User) GetSecurityQueryWithSub(schemaCode string, subSelect interface{}, opt *db.Options) (*builder.Statement, error) {
 	schemaTable := fmt.Sprintf("%s%s AS sch", constants.InstancesTablePrefix, schemaCode)
 	securitySchema := u.Security.Schema[schemaCode]
 	columns := []string{}
@@ -91,6 +93,17 @@ func (u *User) GetSecurityQueryWithSub(schemaCode string, subSelect interface{})
 
 	u.loadSecurityTreeJoins(schemaCode, statement)
 	u.loadSecurityConditions(schemaCode, statement)
+
+	if opt.Conditions != nil {
+		statement.Where(opt.Conditions)
+	}
+
+	if opt.OrderBy != nil {
+		statement.OrderBy(opt.OrderBy...)
+	}
+
+	statement.Limit(opt.Limit)
+	statement.Offset(opt.Offset)
 
 	return statement, nil
 }
@@ -337,7 +350,7 @@ func (u *User) securityMapScan(schemaCode string, rows *sql.Rows) ([]map[string]
 }
 
 // SecurityMapScanWithFields checks the security in the instance columns and clears if user do not have permission
-func (u *User) SecurityMapScanWithFields(schemaCode string, rows *sql.Rows, fields map[string]map[string]string) ([]map[string]interface{}, error) {
+func (u *User) SecurityMapScanWithFields(schemaCode string, rows *sql.Rows, opt *db.Options, fields map[string]map[string]string) ([]map[string]interface{}, error) {
 	securitySchema := u.Security.Schema[schemaCode]
 	securityInstanceSchema := u.SecurityInstances.Schema[schemaCode]
 	deleteColumn := true
@@ -374,10 +387,14 @@ func (u *User) SecurityMapScanWithFields(schemaCode string, rows *sql.Rows, fiel
 			} else {
 				mapJSON[column] = *val
 			}
+			if requiredFields[column] {
+				continue
+			}
+			if !util.Contains(opt.Columns, column) {
+				delete(mapJSON, column)
+				continue
+			}
 			if securitySchema.PermissionStructure == "custom" {
-				if requiredFields[column] {
-					continue
-				}
 				if securityColumn, ok := schemaFields[column]; ok {
 					deleteColumn = true
 					if instanceOptions, ok := securityInstanceSchema.Instance[mapJSON["id"].(string)]; !ok || (ok && instanceOptions.PermissionScope != "replace") {

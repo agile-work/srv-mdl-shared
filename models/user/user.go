@@ -1,6 +1,7 @@
 package user
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/agile-work/srv-mdl-shared/models/instance"
 
 	"github.com/agile-work/srv-shared/constants"
+	"github.com/agile-work/srv-shared/rdb"
 	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
@@ -66,11 +68,27 @@ func (u *User) Create(trs *db.Transaction, columns ...string) error {
 
 // Load defines only one object from the database
 func (u *User) Load() error {
-	if err := db.SelectStruct(constants.TableCoreUsers, u, &db.Options{
-		Conditions: builder.Equal("username", u.Username),
-	}); err != nil {
-		return customerror.New(http.StatusInternalServerError, "user load", err.Error())
+	cache, _ := rdb.Get("instance:user:" + u.Username)
+
+	if cache != "" {
+		if err := json.Unmarshal([]byte(cache), u); err != nil {
+			return customerror.New(http.StatusInternalServerError, "user parse from cache", err.Error())
+		}
+	} else {
+		if err := db.SelectStruct(constants.TableCoreUsers, u, &db.Options{
+			Conditions: builder.Equal("username", u.Username),
+		}); err != nil {
+			return customerror.New(http.StatusInternalServerError, "user load", err.Error())
+		}
+		jsonBytes, err := json.Marshal(u)
+		if err != nil {
+			return customerror.New(http.StatusInternalServerError, "user parse to cache", err.Error())
+		}
+		if err := rdb.Set("instance:user:"+u.Username, string(jsonBytes), 0); err != nil {
+			return customerror.New(http.StatusInternalServerError, "user parse save cache", err.Error())
+		}
 	}
+
 	return nil
 }
 

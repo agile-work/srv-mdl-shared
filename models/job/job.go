@@ -2,19 +2,22 @@ package job
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
+	"github.com/agile-work/srv-mdl-shared/models/customerror"
 	"github.com/agile-work/srv-mdl-shared/models/translation"
 	"github.com/agile-work/srv-shared/constants"
+	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
 
 // Job defines the struct of this object
 type Job struct {
 	ID          string                  `json:"id" sql:"id" pk:"true"`
-	Code        string                  `json:"code" sql:"code"`
+	Code        string                  `json:"code" sql:"code" updatable:"false" validate:"required"`
 	Name        translation.Translation `json:"name" sql:"name" field:"jsonb" validate:"required"`
-	Description translation.Translation `json:"description" sql:"description" field:"jsonb"`
+	Description translation.Translation `json:"description" sql:"description" field:"jsonb" validate:"required"`
 	JobType     string                  `json:"job_type" sql:"job_type"`
 	ExecTimeout int                     `json:"exec_timeout" sql:"exec_timeout"`
 	Params      []Param                 `json:"parameters" sql:"parameters" field:"jsonb"`
@@ -50,11 +53,11 @@ type JobTask struct {
 	Code             string                  `json:"code" sql:"code"`
 	Name             translation.Translation `json:"name" sql:"name" field:"jsonb" validate:"required"`
 	Description      translation.Translation `json:"description" sql:"description" field:"jsonb"`
-	JobID            string                  `json:"job_id" sql:"job_id" fk:"true"`
+	JobCode          string                  `json:"job_code" sql:"job_code" fk:"true"`
 	TaskSequence     int                     `json:"task_sequence" sql:"task_sequence"`
 	ExecTimeout      int                     `json:"exec_timeout" sql:"exec_timeout"`
 	Params           []Param                 `json:"parameters" sql:"parameters" field:"jsonb"`
-	ParentID         string                  `json:"parent_id" sql:"parent_id" fk:"true"`
+	ParentCode       string                  `json:"parent_code" sql:"parent_code" fk:"true"`
 	ExecAction       string                  `json:"exec_action" sql:"exec_action"`
 	ExecAddress      string                  `json:"exec_address" sql:"exec_address"`
 	ExecPayload      string                  `json:"exec_payload" sql:"exec_payload"`
@@ -141,9 +144,8 @@ type Param struct {
 // JobInstance defines the struct of this object
 type JobInstance struct {
 	ID          string    `json:"id" sql:"id" pk:"true"`
-	JobID       string    `json:"job_id" sql:"job_id" fk:"true"`
+	JobCode     string    `json:"job_code" sql:"job_code" fk:"true"`
 	ServiceID   string    `json:"service_id" sql:"service_id" fk:"true"`
-	Code        string    `json:"code" sql:"code"`
 	ExecTimeout int       `json:"exec_timeout" sql:"exec_timeout"`
 	Params      []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
 	Status      string    `json:"status" sql:"status"`
@@ -155,54 +157,56 @@ type JobInstance struct {
 	UpdatedAt   time.Time `json:"updated_at" sql:"updated_at"`
 }
 
-// CreateInstance create a new job instance
-func CreateInstance(ownerID string, code string, params map[string]interface{}) (string, error) {
-	jobTable := constants.TableCoreJobs
-	//TODO replace with options -> condition := builder.Equal("code", code)
-	job := Job{}
+// Load defines only one object from the database
+func (j *Job) Load() error {
+	if err := db.SelectStruct(constants.TableCoreJobs, j, &db.Options{
+		Conditions: builder.Equal("code", j.Code),
+	}); err != nil {
+		return customerror.New(http.StatusInternalServerError, "job load", err.Error())
+	}
+	return nil
+}
 
-	err := db.SelectStruct(jobTable, &job, nil)
-	if err != nil {
+// Create create a new job instance
+func (j *JobInstance) Create(trs *db.Transaction, owner string, code string, params map[string]interface{}) (string, error) {
+	job := Job{
+		Code: code,
+	}
+
+	if err := job.Load(); err != nil {
 		return "", err
 	}
 
-	jobInstanceParams, err := fillParameters(job.Params, params)
-	if err != nil {
+	if err := j.fillParameters(job.Params, params); err != nil {
 		return "", err
 	}
 
-	jobInstanceTable := constants.TableCoreJobInstances
 	date := time.Now()
-	jobInstance := JobInstance{
-		JobID:       job.ID,
-		Code:        job.Code,
-		ExecTimeout: job.ExecTimeout,
-		Params:      jobInstanceParams,
-		Status:      constants.JobStatusCreating,
-		CreatedBy:   ownerID,
-		CreatedAt:   date,
-		UpdatedBy:   ownerID,
-		UpdatedAt:   date,
-	}
+	j.JobCode = job.Code
+	j.ExecTimeout = job.ExecTimeout
+	j.Status = constants.JobStatusCreating
+	j.CreatedBy = owner
+	j.CreatedAt = date
+	j.UpdatedBy = owner
+	j.UpdatedAt = date
 
-	return db.InsertStruct(jobInstanceTable, &jobInstance)
+	return db.InsertStructTx(trs.Tx, constants.TableCoreJobInstances, j)
 }
 
 // fillParameters fill parameters with values
-func fillParameters(params []Param, values map[string]interface{}) ([]Param, error) {
+func (j *JobInstance) fillParameters(params []Param, values map[string]interface{}) error {
 	if len(params) != len(values) {
-		return nil, errors.New("the number of parameters can not be different from the number of values")
+		return errors.New("the number of parameters can not be different from the number of values")
 	}
 
-	result := []Param{}
 	for _, param := range params {
 		if value, ok := values[param.Key]; ok {
 			param.Value = value.(string)
-			result = append(result, param)
+			j.Params = append(j.Params, param)
 		} else {
-			return nil, errors.New("parameter invalid")
+			return errors.New("parameter invalid")
 		}
 	}
 
-	return result, nil
+	return nil
 }

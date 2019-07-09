@@ -90,16 +90,18 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	defer db.Close()
 	fmt.Println("Database connected")
 
+	params, err := util.GetSystemParams()
+	if err != nil {
+		fmt.Printf("Database system param error - %s", err.Error())
+		return
+	}
+	translation.SystemDefaultLanguageCode = params[constants.SysParamDefaultLanguageCode]
+
 	rdb.Init(*redisHost, *redisPort, *redisPass)
 	defer rdb.Close()
 
 	socket.Init(module, *wsHost, *wsPort)
 	defer socket.Close()
-
-	params, err := util.GetSystemParams()
-	if err == nil {
-		translation.SystemDefaultLanguageCode = params[constants.SysParamLanguageCode]
-	}
 
 	router := chi.NewRouter()
 	router.Use(

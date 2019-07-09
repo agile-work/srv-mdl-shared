@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -10,10 +11,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/agile-work/srv-shared/constants"
 	"github.com/agile-work/srv-shared/util"
 
 	"github.com/agile-work/srv-mdl-shared/models/customerror"
 	"github.com/agile-work/srv-mdl-shared/models/translation"
+	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
 
@@ -135,4 +138,44 @@ func Unique(slice []string) []string {
 		}
 	}
 	return list
+}
+
+// GetContentPrefix validate if content exists and return the prefix
+func GetContentPrefix(code string) (string, error) {
+	rows, err := db.Query(builder.Select("prefix", "is_system").From(constants.TableCoreContents).Where(builder.Equal("code", code)))
+	if err != nil {
+		return "", err
+	}
+
+	content, err := db.MapScan(rows)
+	if err != nil {
+		return "", err
+	}
+
+	if len(content) <= 0 {
+		return "", fmt.Errorf("invalid code")
+	}
+
+	prefix := content[0]["prefix"].(string)
+	if content[0]["is_system"].(bool) {
+		prefix = "sys_" + prefix
+	} else {
+		prefix = "custom_" + prefix
+	}
+
+	return prefix, nil
+}
+
+// ValidateContent validate if the content exists in the database
+func ValidateContent(code string) error {
+	total, err := db.Count("code", constants.TableCoreContents, &db.Options{
+		Conditions: builder.Equal("code", code),
+	})
+	if err != nil {
+		return err
+	}
+	if total <= 0 {
+		return fmt.Errorf("code not found")
+	}
+	return nil
 }

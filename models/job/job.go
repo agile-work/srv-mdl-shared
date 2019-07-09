@@ -143,18 +143,21 @@ type Param struct {
 
 // JobInstance defines the struct of this object
 type JobInstance struct {
-	ID          string    `json:"id" sql:"id" pk:"true"`
-	JobCode     string    `json:"job_code" sql:"job_code" fk:"true"`
-	ServiceID   string    `json:"service_id" sql:"service_id" fk:"true"`
-	ExecTimeout int       `json:"exec_timeout" sql:"exec_timeout"`
-	Params      []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
-	Status      string    `json:"status" sql:"status"`
-	StartAt     time.Time `json:"start_at" sql:"start_at"`
-	FinishAt    time.Time `json:"finish_at" sql:"finish_at"`
-	CreatedBy   string    `json:"created_by" sql:"created_by"`
-	CreatedAt   time.Time `json:"created_at" sql:"created_at"`
-	UpdatedBy   string    `json:"updated_by" sql:"updated_by"`
-	UpdatedAt   time.Time `json:"updated_at" sql:"updated_at"`
+	ID                     string                 `json:"id" sql:"id" pk:"true"`
+	JobCode                string                 `json:"job_code" sql:"job_code" fk:"true"`
+	ServiceID              string                 `json:"service_id" sql:"service_id" fk:"true"`
+	ExecTimeout            int                    `json:"exec_timeout" sql:"exec_timeout"`
+	Params                 []Param                `json:"parameters" sql:"parameters" field:"jsonb"`
+	Results                map[string]interface{} `json:"results" sql:"results" field:"jsonb"`
+	WorkflowStepInstanceID string                 `json:"bpm_step_instance_id" sql:"bpm_step_instance_id"`
+	WorkflowStepActionCode string                 `json:"bpm_step_action_code" sql:"bpm_step_action_code"`
+	Status                 string                 `json:"status" sql:"status"`
+	StartAt                time.Time              `json:"start_at" sql:"start_at"`
+	FinishAt               time.Time              `json:"finish_at" sql:"finish_at"`
+	CreatedBy              string                 `json:"created_by" sql:"created_by"`
+	CreatedAt              time.Time              `json:"created_at" sql:"created_at"`
+	UpdatedBy              string                 `json:"updated_by" sql:"updated_by"`
+	UpdatedAt              time.Time              `json:"updated_at" sql:"updated_at"`
 }
 
 // Load defines only one object from the database

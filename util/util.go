@@ -179,3 +179,40 @@ func ValidateContent(code string) error {
 	}
 	return nil
 }
+
+// GetBodyUpdatableJSONColumns get all columns from body based on the struct fields
+func GetBodyUpdatableJSONColumns(r *http.Request, object interface{}, username, languageCode string) (map[string]interface{}, error) {
+	bodyMap, err := GetBodyMap(r)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+
+	elem := reflect.TypeOf(object).Elem()
+	for i := 0; i < elem.NumField(); i++ {
+		field := elem.Field(i)
+		if field.Tag.Get("updatable") != "false" && field.Name != "CreatedBy" && field.Name != "CreatedAt" {
+			col := field.Tag.Get("json")
+			if val, ok := bodyMap[col]; ok {
+				if field.Type == reflect.TypeOf(translation.Translation{}) {
+					path := col
+					if languageCode != "all" {
+						path = fmt.Sprintf("%s, %s", col, languageCode)
+					}
+					result[path] = val
+				} else {
+					result[col] = val
+				}
+			}
+		}
+		if field.Name == "UpdatedBy" {
+			result["updated_by"] = username
+		}
+		if field.Name == "UpdatedAt" {
+			result["updated_at"] = time.Now()
+		}
+	}
+
+	return result, nil
+}

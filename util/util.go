@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/agile-work/srv-shared/constants"
@@ -127,7 +128,7 @@ func SetSchemaAudit(r *http.Request, object interface{}) {
 	}
 }
 
-// Unique returns a slice with unique itens
+// Unique returns a slice with unique items
 func Unique(slice []string) []string {
 	keys := make(map[string]bool)
 	list := []string{}
@@ -193,7 +194,7 @@ func GetBodyUpdatableJSONColumns(r *http.Request, object interface{}, username, 
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
 		if field.Tag.Get("updatable") != "false" && field.Name != "CreatedBy" && field.Name != "CreatedAt" {
-			col := field.Tag.Get("json")
+			col := strings.Split(field.Tag.Get("json"), ",")[0]
 			if val, ok := bodyMap[col]; ok {
 				if field.Type == reflect.TypeOf(translation.Translation{}) {
 					path := col

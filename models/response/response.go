@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	shared "github.com/agile-work/srv-mdl-shared"
 	"github.com/agile-work/srv-mdl-shared/models/customerror"
@@ -51,14 +52,22 @@ func (r *Response) Parse(req *http.Request, object interface{}) error {
 			return customerror.New(http.StatusBadRequest, "response load unmarshal body", err.Error())
 		}
 		if req.Method == http.MethodPost {
-			err = shared.Validate.Struct(object)
-			if err != nil {
-				return customerror.New(http.StatusBadRequest, "response load invalid body", err.Error())
+			o := reflect.ValueOf(object).Elem()
+			if o.Kind() == reflect.Slice {
+				for i := 0; i < o.Len(); i++ {
+					if err := shared.Validate.Struct(o.Index(i)); err != nil {
+						return customerror.New(http.StatusBadRequest, "response load invalid body", err.Error())
+					}
+				}
+			} else {
+				if err := shared.Validate.Struct(object); err != nil {
+					return customerror.New(http.StatusBadRequest, "response load invalid body", err.Error())
+				}
 			}
 		}
 	}
 
-	util.SetSchemaAudit(req, object)
+	util.SetSchemaAudit(req.Method, req.Header.Get("Username"), object)
 	return nil
 }
 

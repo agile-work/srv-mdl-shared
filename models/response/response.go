@@ -9,6 +9,7 @@ import (
 
 	shared "github.com/agile-work/srv-mdl-shared"
 	"github.com/agile-work/srv-mdl-shared/models/customerror"
+	"github.com/agile-work/srv-mdl-shared/models/translation"
 
 	"github.com/agile-work/srv-mdl-shared/util"
 
@@ -47,6 +48,7 @@ func (r *Response) Parse(req *http.Request, object interface{}) error {
 	r.Code = http.StatusOK
 	body, _ := util.GetBody(req)
 	if len(body) > 0 {
+		translation.SetStructTranslationsLanguage(object, req.Header.Get("Content-Language"))
 		err := json.Unmarshal(body, object)
 		if err != nil {
 			return customerror.New(http.StatusBadRequest, "response load unmarshal body", err.Error())

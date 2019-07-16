@@ -69,7 +69,7 @@ func (r *Response) Parse(req *http.Request, object interface{}) error {
 		}
 	}
 
-	util.SetSchemaAudit(req.Method, req.Header.Get("Username"), object)
+	util.SetSchemaAudit(req.Method == http.MethodPost, req.Header.Get("Username"), object)
 	return nil
 }
 

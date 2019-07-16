@@ -102,11 +102,11 @@ func GetBodyColumns(body map[string]interface{}) []string {
 }
 
 // SetSchemaAudit load user and time to audit fields
-func SetSchemaAudit(httpMethod, username string, object interface{}) {
+func SetSchemaAudit(isCreate bool, username string, object interface{}) {
 	now := time.Now()
 	elementValue := reflect.ValueOf(object).Elem()
 
-	if httpMethod == http.MethodPost {
+	if isCreate {
 		elementCreatedBy := elementValue.FieldByName("CreatedBy")
 		elementCreatedAt := elementValue.FieldByName("CreatedAt")
 		if elementCreatedBy.IsValid() {
@@ -189,7 +189,7 @@ func ValidateContent(code string) error {
 }
 
 // GetBodyUpdatableJSONColumns get all columns from body based on the struct fields
-func GetBodyUpdatableJSONColumns(r *http.Request, object interface{}, username, languageCode string) (map[string]interface{}, error) {
+func GetBodyUpdatableJSONColumns(r *http.Request, isCreate bool, object interface{}, username, languageCode string) (map[string]interface{}, error) {
 	bodyMap, err := GetBodyMap(r)
 	if err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func GetBodyUpdatableJSONColumns(r *http.Request, object interface{}, username, 
 	elem := reflect.TypeOf(object).Elem()
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
-		if field.Tag.Get("updatable") != "false" && field.Name != "CreatedBy" && field.Name != "CreatedAt" {
+		if field.Tag.Get("updatable") != "false" {
 			col := strings.Split(field.Tag.Get("json"), ",")[0]
 			if val, ok := bodyMap[col]; ok {
 				if field.Type == reflect.TypeOf(translation.Translation{}) {
@@ -214,13 +214,32 @@ func GetBodyUpdatableJSONColumns(r *http.Request, object interface{}, username, 
 				}
 			}
 		}
+		now := time.Now()
+		if isCreate && field.Name == "CreatedBy" {
+			result["created_by"] = username
+		}
+		if isCreate && field.Name == "CreatedAt" {
+			result["created_at"] = now
+		}
 		if field.Name == "UpdatedBy" {
 			result["updated_by"] = username
 		}
 		if field.Name == "UpdatedAt" {
-			result["updated_at"] = time.Now()
+			result["updated_at"] = now
 		}
 	}
 
 	return result, nil
+}
+
+// DataToStruct convert a map to struct
+func DataToStruct(data interface{}, object interface{}) error {
+	dataByte, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(dataByte, object); err != nil {
+		return err
+	}
+	return nil
 }

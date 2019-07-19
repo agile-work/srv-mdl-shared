@@ -18,7 +18,7 @@ import (
 
 // Job defines the struct of this object
 type Job struct {
-	ID          string                  `json:"id" sql:"id" pk:"true"`
+	ID          string                  `json:"id" sql:"id"`
 	Code        string                  `json:"code" sql:"code" updatable:"false" validate:"required"`
 	Name        translation.Translation `json:"name" sql:"name" field:"jsonb" validate:"required"`
 	Description translation.Translation `json:"description" sql:"description" field:"jsonb" validate:"required"`
@@ -106,9 +106,9 @@ func (t *Jobs) LoadAll(opt *db.Options) error {
 
 // Instance defines the struct of this object
 type Instance struct {
-	ID                     string                 `json:"id" sql:"id" pk:"true"`
-	JobCode                string                 `json:"job_code" sql:"job_code" fk:"true"`
-	ServiceID              string                 `json:"service_id" sql:"service_id" fk:"true"`
+	ID                     string                 `json:"id" sql:"id"`
+	JobCode                string                 `json:"job_code" sql:"job_code"`
+	ServiceID              string                 `json:"service_id" sql:"service_id"`
 	ExecTimeout            int                    `json:"exec_timeout" sql:"exec_timeout"`
 	Params                 []Param                `json:"parameters" sql:"parameters" field:"jsonb"`
 	Results                map[string]interface{} `json:"results" sql:"results" field:"jsonb"`
@@ -167,19 +167,26 @@ func (i *Instance) fillParameters(params []Param, values map[string]interface{})
 	return nil
 }
 
-// Followers defines the struct of this object
-type Followers struct {
-	ID           string    `json:"id" sql:"id" pk:"true"`
-	JobID        string    `json:"job_id" sql:"job_id" fk:"true"`
-	Name         string    `json:"name" sql:"name"`
-	LanguageCode string    `json:"language_code" sql:"language_code"`
-	FollowerID   string    `json:"follower_id" sql:"follower_id"`
-	FollowerType string    `json:"follower_type" sql:"follower_type"`
-	Active       bool      `json:"active" sql:"active"`
-	CreatedBy    string    `json:"created_by" sql:"created_by"`
-	CreatedAt    time.Time `json:"created_at" sql:"created_at"`
-	// UpdatedBy    string    `json:"updated_by" sql:"updated_by"`
-	// UpdatedAt    time.Time `json:"updated_at" sql:"updated_at"`
+// CreateFromJSON create a new job instance based on a json file
+func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, code, definitionPath string, timeout int, params map[string]interface{}) error {
+	date := time.Now()
+	i.JobCode = code
+	i.ExecTimeout = timeout
+	i.Status = constants.JobStatusCreating
+	i.CreatedBy = owner
+	i.CreatedAt = date
+	i.UpdatedBy = owner
+	i.UpdatedAt = date
+
+	id, err := db.InsertStructTx(trs.Tx, constants.TableCoreJobInstances, i)
+	if err != nil {
+		return err
+	}
+
+	if err := importJSONTasks(trs, id, code, definitionPath); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Param defines the struct of this object

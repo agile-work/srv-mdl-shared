@@ -15,15 +15,15 @@ import (
 
 // Task defines the struct of this object
 type Task struct {
-	ID               string                  `json:"id" sql:"id" pk:"true"`
+	ID               string                  `json:"id" sql:"id"`
 	Code             string                  `json:"code" sql:"code"`
 	Name             translation.Translation `json:"name" sql:"name" field:"jsonb" validate:"required"`
 	Description      translation.Translation `json:"description" sql:"description" field:"jsonb"`
-	JobCode          string                  `json:"job_code" sql:"job_code" fk:"true"`
+	JobCode          string                  `json:"job_code" sql:"job_code"`
 	TaskSequence     int                     `json:"task_sequence" sql:"task_sequence"`
 	ExecTimeout      int                     `json:"exec_timeout" sql:"exec_timeout"`
 	Params           []Param                 `json:"parameters" sql:"parameters" field:"jsonb"`
-	ParentCode       string                  `json:"parent_code" sql:"parent_code" fk:"true"`
+	ParentCode       string                  `json:"parent_code" sql:"parent_code"`
 	ExecAction       string                  `json:"exec_action" sql:"exec_action"`
 	ExecAddress      string                  `json:"exec_address" sql:"exec_address"`
 	ExecPayload      string                  `json:"exec_payload" sql:"exec_payload"`

@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/agile-work/srv-mdl-shared/middlewares"
-
 	"github.com/agile-work/srv-mdl-shared/models/translation"
 	"github.com/agile-work/srv-shared/rdb"
 	"github.com/agile-work/srv-shared/service"
@@ -46,13 +44,44 @@ var (
 	redisPass  = flag.String("redisPass", "redis123", "Redis password")
 	wsHost     = flag.String("wsHost", "localhost", "Realtime host")
 	wsPort     = flag.Int("wsPort", 8010, "Realtime port")
+	store      = flag.Bool("store", false, "Persiste this instance to the database")
+	install    = flag.Bool("install", false, "Install this module to the system")
 )
 
 // Validate global instance of the validator
 var Validate *validator.Validate
 
+// InstallModule function to define how to install the module
+type InstallModule func() error
+
+// registerModule execute module installation job
+func registerModule(code, host string, port int, installModule InstallModule) {
+	fmt.Printf("Installing Module %s...\n", code)
+
+	err := db.Connect(*dbHost, *dbPort, *dbUser, *dbPassword, *dbName, false)
+	if err != nil {
+		panic("Database error")
+	}
+	defer db.Close()
+	fmt.Println("Database connected")
+
+	pid := os.Getpid()
+	module, err := service.LoadModule(code, host, port, pid, false)
+	if module != nil {
+		fmt.Println("Module already installed")
+		return
+	}
+
+	fmt.Println("Module installing...")
+
+	if err := installModule(); err != nil {
+		fmt.Printf("\nModule installing error: %s\n", err.Error())
+	}
+
+}
+
 // ListenAndServe default module api listen and server
-func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
+func ListenAndServe(code, host string, port int, installModule InstallModule, moduleRouter *chi.Mux) {
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)
 
@@ -64,10 +93,25 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 		host = *mdlHost
 	}
 
-	pid := os.Getpid()
-	module := service.New(name, constants.ServiceTypeModule, host, port, pid)
+	if *install {
+		registerModule(code, host, port, installModule)
+		return
+	}
 
-	fmt.Printf("Starting Module %s...\n", module.Name)
+	fmt.Printf("Starting Module %s...\n", code)
+	err := db.Connect(*dbHost, *dbPort, *dbUser, *dbPassword, *dbName, false)
+	if err != nil {
+		panic("Database error")
+	}
+	defer db.Close()
+	fmt.Println("Database connected")
+
+	pid := os.Getpid()
+	module, err := service.LoadModule(code, host, port, pid, *store)
+	if err != nil {
+		fmt.Printf("Loading module error: %s\n", err.Error())
+		return
+	}
 	fmt.Printf("[Instance: %s | PID: %d]\n", module.InstanceCode, module.PID)
 
 	caCert, err := ioutil.ReadFile(*cert)
@@ -82,13 +126,6 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 		ClientAuth: tls.RequireAndVerifyClientCert,
 	}
 	tlsConfig.BuildNameToCertificate()
-
-	err = db.Connect(*dbHost, *dbPort, *dbUser, *dbPassword, *dbName, false)
-	if err != nil {
-		panic("Database error")
-	}
-	defer db.Close()
-	fmt.Println("Database connected")
 
 	params, err := util.GetSystemParams()
 	if err != nil {
@@ -110,7 +147,6 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 		middleware.DefaultCompress,
 		middleware.RedirectSlashes,
 		middleware.Recoverer,
-		middlewares.Translation,
 	)
 	router.Mount("/api/v1", moduleRouter)
 
@@ -126,7 +162,7 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	Validate = validator.New()
 
 	go func() {
-		fmt.Printf("Service %s listening on %d\n", name, port)
+		fmt.Printf("Service %s listening on %d\n", module.Name, module.Port)
 		if err := httpServer.ListenAndServeTLS(*cert, *key); err != nil {
 			if strings.Contains(err.Error(), "bind: address already in use") {
 				if err := rdb.Delete("module:def:" + module.InstanceCode); err != nil {
@@ -167,6 +203,7 @@ func ListenAndServe(name, host string, port int, moduleRouter *chi.Mux) {
 	if _, err := rdb.LRem("api:modules", 0, module.InstanceCode); err != nil {
 		fmt.Println(err)
 	}
+	module.RemoveModuleRegister()
 	if err := socket.Emit(socket.Message{
 		Recipients: []string{"service.api"},
 		Data:       "reload",

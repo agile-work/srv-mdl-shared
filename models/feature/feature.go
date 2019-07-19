@@ -10,7 +10,7 @@ import (
 
 // Features define a list of features from a module
 type Features struct {
-	list map[string]feature `validate:"required,dive,required"`
+	list map[string]Feature `validate:"required,dive,required"`
 }
 
 // MarshalJSON custom marshal function to return only the map of available features
@@ -18,8 +18,8 @@ func (f Features) MarshalJSON() ([]byte, error) {
 	return json.Marshal(f.list)
 }
 
-type feature struct {
-	Mode        string                             `json:"mode" validate:"required"`
+// Feature define the name, description and permissions for a feature
+type Feature struct {
 	Name        translation.Translation            `json:"name" validate:"required"`
 	Description translation.Translation            `json:"description" validate:"required"`
 	Permissions map[string]translation.Translation `json:"permissions" validate:"required"`

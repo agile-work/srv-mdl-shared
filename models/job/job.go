@@ -168,9 +168,10 @@ func (i *Instance) fillParameters(params []Param, values map[string]interface{})
 }
 
 // CreateFromJSON create a new job instance based on a json file
-func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, code, definitionPath string, timeout int, params map[string]interface{}) error {
+func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, path string, timeout int, params map[string]interface{}) error {
 	date := time.Now()
-	i.JobCode = code
+	i.ID = db.UUID()
+	i.JobCode = "none"
 	i.ExecTimeout = timeout
 	i.Status = constants.JobStatusCreating
 	i.CreatedBy = owner
@@ -183,7 +184,16 @@ func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, code, definitionPa
 		return err
 	}
 
-	if err := importJSONTasks(trs, id, code, definitionPath); err != nil {
+	if err := importJSONTasks(trs, id, path); err != nil {
+		return err
+	}
+
+	i.Status = constants.JobStatusCreated
+	i.UpdatedAt = time.Now()
+
+	if err := db.UpdateStructTx(trs.Tx, constants.TableCoreJobInstances, i, &db.Options{
+		Conditions: builder.Equal("id", i.ID),
+	}, "status", "updated_at"); err != nil {
 		return err
 	}
 	return nil

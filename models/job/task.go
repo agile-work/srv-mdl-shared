@@ -113,3 +113,36 @@ func (t *Tasks) LoadAll(opt *db.Options) error {
 	}
 	return nil
 }
+
+type InstanceTask struct {
+	ID               string    `json:"id" sql:"id"`
+	JobInstanceID    string    `json:"job_instance_id" sql:"job_instance_id"`
+	TaskCode         string    `json:"task_code" sql:"task_code"`
+	TaskSequence     int       `json:"task_sequence" sql:"task_sequence"`
+	ExecTimeout      int       `json:"exec_timeout" sql:"exec_timeout"`
+	Params           []Param   `json:"parameters" sql:"parameters" field:"jsonb"`
+	ParentCode       string    `json:"parent_code" sql:"parent_code"`
+	ExecAction       string    `json:"exec_action" sql:"exec_action"`
+	ExecAddress      string    `json:"exec_address" sql:"exec_address"`
+	ExecPayload      string    `json:"exec_payload" sql:"exec_payload"`
+	ActionOnFail     string    `json:"action_on_fail" sql:"action_on_fail"`
+	MaxRetryAttempts int       `json:"max_retry_attempts" sql:"max_retry_attempts"`
+	RollbackAction   string    `json:"rollback_action" sql:"rollback_action"`
+	RollbackAddress  string    `json:"rollback_address" sql:"rollback_address"`
+	RollbackPayload  string    `json:"rollback_payload" sql:"rollback_payload"`
+	Status           string    `json:"status" sql:"status"`
+	CreatedBy        string    `json:"created_by" sql:"created_by"`
+	CreatedAt        time.Time `json:"created_at" sql:"created_at"`
+	UpdatedBy        string    `json:"updated_by" sql:"updated_by"`
+	UpdatedAt        time.Time `json:"updated_at" sql:"updated_at"`
+}
+
+// Create persists the struct creating a new object in the database
+func (t *InstanceTask) Create(trs *db.Transaction) error {
+	id, err := db.InsertStructTx(trs.Tx, constants.TableCoreJobTaskInstances, t)
+	if err != nil {
+		customerror.New(http.StatusInternalServerError, "task instance create", err.Error())
+	}
+	t.ID = id
+	return nil
+}

@@ -52,7 +52,7 @@ var (
 var Validate *validator.Validate
 
 // InstallModule function to define how to install the module
-type InstallModule func() error
+type InstallModule func(moduleID string) error
 
 // registerModule execute module installation job
 func registerModule(code, host string, port int, installModule InstallModule) {
@@ -66,15 +66,20 @@ func registerModule(code, host string, port int, installModule InstallModule) {
 	fmt.Println("Database connected")
 
 	pid := os.Getpid()
-	module, err := service.LoadModule(code, host, port, pid, false)
-	if module != nil {
-		fmt.Println("Module already installed")
+	service, err := service.LoadModule(code, host, port, pid, false)
+	if err != nil {
+		fmt.Println(err.Error())
 		return
+	}
+
+	moduleID := ""
+	if service != nil {
+		moduleID = service.InstanceCode
 	}
 
 	fmt.Println("Module installing...")
 
-	if err := installModule(); err != nil {
+	if err := installModule(moduleID); err != nil {
 		fmt.Printf("\nModule installing error: %s\n", err.Error())
 	}
 

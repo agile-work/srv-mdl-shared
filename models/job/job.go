@@ -138,6 +138,7 @@ func (i *Instance) Create(trs *db.Transaction, owner string, code string, params
 	}
 
 	date := time.Now()
+	i.ID = db.UUID()
 	i.JobCode = job.Code
 	i.ExecTimeout = job.ExecTimeout
 	i.Status = constants.JobStatusCreating
@@ -168,10 +169,11 @@ func (i *Instance) fillParameters(params []Param, values map[string]interface{})
 }
 
 // CreateFromJSON create a new job instance based on a json file
-func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, path string, timeout int, params map[string]interface{}) error {
+func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, path string, timeout int, params map[string]interface{}) (string, error) {
+	id := db.UUID()
 	date := time.Now()
-	i.ID = db.UUID()
-	i.JobCode = "none"
+	i.ID = id
+	i.JobCode = id
 	i.ExecTimeout = timeout
 	i.Status = constants.JobStatusCreating
 	i.CreatedBy = owner
@@ -181,11 +183,11 @@ func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, path string, timeo
 
 	id, err := db.InsertStructTx(trs.Tx, constants.TableCoreJobInstances, i)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if err := importJSONTasks(trs, id, path); err != nil {
-		return err
+		return "", err
 	}
 
 	i.Status = constants.JobStatusCreated
@@ -194,9 +196,9 @@ func (i *Instance) CreateFromJSON(trs *db.Transaction, owner, path string, timeo
 	if err := db.UpdateStructTx(trs.Tx, constants.TableCoreJobInstances, i, &db.Options{
 		Conditions: builder.Equal("id", i.ID),
 	}, "status", "updated_at"); err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return id, nil
 }
 
 // Param defines the struct of this object

@@ -1,16 +1,13 @@
 package module
 
 import (
-	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/agile-work/srv-mdl-shared/models/customerror"
 	"github.com/agile-work/srv-mdl-shared/models/feature"
 	"github.com/agile-work/srv-mdl-shared/models/translation"
 	"github.com/agile-work/srv-shared/constants"
-	"github.com/agile-work/srv-shared/sql-builder/builder"
 	"github.com/agile-work/srv-shared/sql-builder/db"
 )
 
@@ -38,71 +35,13 @@ type Definition struct {
 	Features  map[string]feature.Feature `json:"features,omitempty"`
 }
 
-// Register defines the configuration for a new module
-func (m *Module) Register(trs *db.Transaction) error {
+// Create defines the configuration for a new module
+func (m *Module) Create(trs *db.Transaction) error {
 	translation.SetStructTranslationsLanguage(m, "all")
-	m.Status = constants.ModuleStatusRegistered
 	id, err := db.InsertStructTx(trs.Tx, constants.TableCoreModules, m)
 	if err != nil {
 		return customerror.New(http.StatusInternalServerError, "module register", err.Error())
 	}
 	m.ID = id
-	return nil
-}
-
-// Update updates object data in the database
-func (m *Module) Update(trs *db.Transaction, columns []string, translations map[string]string) error {
-	opt := &db.Options{Conditions: builder.Equal("code", m.Code)}
-
-	if len(columns) > 0 {
-		if err := db.UpdateStructTx(trs.Tx, constants.TableCoreModules, m, opt, strings.Join(columns, ",")); err != nil {
-			return customerror.New(http.StatusInternalServerError, "module update", err.Error())
-		}
-	}
-
-	if len(translations) > 0 {
-		statement := builder.Update(constants.TableCoreModules)
-		for col, val := range translations {
-			statement.JSON(col, translation.FieldsRequestLanguageCode)
-			jsonVal, _ := json.Marshal(val)
-			statement.Values(jsonVal)
-		}
-		statement.Where(opt.Conditions)
-		if _, err := trs.Query(statement); err != nil {
-			return customerror.New(http.StatusInternalServerError, "module update", err.Error())
-		}
-	}
-
-	return nil
-}
-
-// Load returns only one object from the database
-func (m *Module) Load() error {
-	if err := db.SelectStruct(constants.TableCoreModules, m, &db.Options{
-		Conditions: builder.Equal("code", m.Code),
-	}); err != nil {
-		return customerror.New(http.StatusInternalServerError, "module load", err.Error())
-	}
-	return nil
-}
-
-// Delete the object from the database
-func (m *Module) Delete(trs *db.Transaction) error {
-	if err := db.DeleteStructTx(trs.Tx, constants.TableCoreModules, &db.Options{
-		Conditions: builder.Equal("code", m.Code),
-	}); err != nil {
-		return customerror.New(http.StatusInternalServerError, "module create", err.Error())
-	}
-	return nil
-}
-
-// Modules slice of module
-type Modules []Module
-
-// LoadAll defines all instances from the object
-func (m *Modules) LoadAll(opt *db.Options) error {
-	if err := db.SelectStruct(constants.TableCoreModules, m, opt); err != nil {
-		return customerror.New(http.StatusInternalServerError, "modules load", err.Error())
-	}
 	return nil
 }

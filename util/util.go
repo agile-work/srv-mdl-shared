@@ -150,7 +150,7 @@ func Unique(slice []string) []string {
 
 // GetContentPrefix validate if content exists and return the prefix
 func GetContentPrefix(code string) (string, error) {
-	rows, err := db.Query(builder.Select("prefix", "is_system").From(constants.TableCoreContents).Where(builder.Equal("code", code)))
+	rows, err := db.Query(builder.Select("prefix", "is_module", "is_system").From(constants.TableCoreContents).Where(builder.Equal("code", code)))
 	if err != nil {
 		return "", err
 	}
@@ -165,8 +165,12 @@ func GetContentPrefix(code string) (string, error) {
 	}
 
 	prefix := content[0]["prefix"].(string)
+	module := ""
+	if content[0]["is_module"].(bool) {
+		module = "mdl_"
+	}
 	if content[0]["is_system"].(bool) {
-		prefix = "sys_" + prefix
+		prefix = "sys_" + module + prefix
 	} else {
 		prefix = "custom_" + prefix
 	}

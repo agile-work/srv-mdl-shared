@@ -24,15 +24,15 @@ func (u *User) Login() error {
 	}
 
 	if u.ID == "" {
-		return customerror.New(http.StatusNotFound, "user login", "invalid email")
+		return customerror.New(http.StatusNotFound, "user login", "user not found with this email")
 	}
 
 	if u.Password != password {
-		return customerror.New(http.StatusBadRequest, "user login", "invalid password")
+		return customerror.New(http.StatusUnauthorized, "user login", "invalid password")
 	}
 
 	if !u.Active {
-		return customerror.New(http.StatusUnauthorized, "user login", "invalid password")
+		return customerror.New(http.StatusUnauthorized, "user login", "deactivated user")
 	}
 
 	u.Password = ""

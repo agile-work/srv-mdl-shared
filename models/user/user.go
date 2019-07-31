@@ -26,14 +26,17 @@ func (u *Users) LoadAll(opt *db.Options) error {
 	return nil
 }
 
-// User defines the struct of this object
+// User swagg-doc:model
+// id,created_by,created_at,updated_by,updated_at,token swagg-doc:attribute:ignore_write
+// security,security_instances swagg-doc:attribute:ignore
+// Defines a user model
 type User struct {
 	ID                string             `json:"id" sql:"id" pk:"true"`
-	Username          string             `json:"username" sql:"username" updatable:"false"`
-	FirstName         string             `json:"first_name" sql:"first_name"`
-	LastName          string             `json:"last_name" sql:"last_name"`
-	Email             string             `json:"email" sql:"email" updatable:"false"`
-	Password          string             `json:"password,omitempty" sql:"password" updatable:"false"`
+	Username          string             `json:"username" sql:"username" updatable:"false" validate:"required"`
+	FirstName         string             `json:"first_name" sql:"first_name" validate:"required"`
+	LastName          string             `json:"last_name" sql:"last_name" validate:"required"`
+	Email             string             `json:"email" sql:"email" updatable:"false" validate:"required"`
+	Password          string             `json:"password,omitempty" sql:"password" updatable:"false" validate:"required"`
 	LanguageCode      string             `json:"language_code" sql:"language_code"`
 	ReceiveEmails     string             `json:"receive_emails" sql:"receive_emails"`
 	Security          *security          `json:"security,omitempty" sql:"security" field:"jsonb"`
